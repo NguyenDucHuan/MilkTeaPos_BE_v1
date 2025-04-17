@@ -14,7 +14,7 @@ namespace MilkTeaPosManagement.Api.Extensions
             service.AddTransient<IUnitOfWork, UnitOfWork<MilTeaPosDbContext>>();
             service.AddTransient<ITokenGenerator, TokenGenerator>();
             service.AddTransient(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-            service.AddTransient<IUserService, UserService>();
+            service.AddTransient<IAccountService, AccountService>();
             service.AddTransient<IAuthenticationService, AuthenticationService>();
             return service;
         }

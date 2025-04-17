@@ -9,5 +9,18 @@
             public const string Authentication = $"{prefix}authen";
             public const string Login = $"{Authentication}/login";
         }
+
+        public static class UserRoute
+        {
+            public const string User = $"{prefix}user";
+            public const string Profile = $"{User}/profile";
+            public const string UpdateProfile = $"{User}/update-profile";
+            public const string ChangePassword = $"{User}/change-password";
+            public const string GetAllUsers = $"{User}/all-users";
+            public const string GetUserById = $"{User}/{Id}";
+            public const string CreateUser = $"{User}/create-user";
+            public const string UpdateUser = $"{User}/update-user/{Id}";
+            public const string DeleteUser = $"{User}/delete-user/{Id}";
+        }
     }
 }

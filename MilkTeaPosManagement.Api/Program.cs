@@ -16,13 +16,13 @@ namespace MilkTeaPosManagement.Api
             // Add services to the container.
             builder.Services.AddService().AddAuthenticationConfig();
 
-            builder.Services.AddControllers()
-                .AddJsonOptions(options =>
-                {
-                    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
-                    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-                });
+            //builder.Services.AddControllers()
+            //    .AddJsonOptions(options =>
+            //    {
+            //        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+            //        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+            //        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            //    });
             builder.Services.AddControllers();
 
             builder.Services.AddDbContext<MilTeaPosDbContext>(options =>
