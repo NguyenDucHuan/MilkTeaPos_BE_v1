@@ -1,0 +1,6 @@
+@MilkTeaPosManagement.Api_HostAddress = http://localhost:5210
+
+GET {{MilkTeaPosManagement.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
