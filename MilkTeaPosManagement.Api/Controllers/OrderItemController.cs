@@ -12,7 +12,7 @@ namespace MilkTeaPosManagement.Api.Controllers
     public class OrderItemController(IOrderItemService service) : ControllerBase
     {
         private readonly IOrderItemService _service = service;
-        [HttpGet("")]
+        [HttpGet("get-cart")]
         public async Task<IActionResult> GetCart()
         {
             var result = await _service.GetCartAsync();

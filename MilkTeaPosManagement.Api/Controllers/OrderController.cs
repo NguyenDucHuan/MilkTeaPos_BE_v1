@@ -6,7 +6,7 @@ using MilkTeaPosManagement.Api.Services.Interfaces;
 
 namespace MilkTeaPosManagement.Api.Controllers
 {
-    [Route("api/payment-methods")]
+    [Route("api/order")]
     [ApiController]
     [Authorize]
     public class OrderController(IOrderService service) : ControllerBase
