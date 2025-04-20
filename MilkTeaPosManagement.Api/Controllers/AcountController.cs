@@ -6,6 +6,7 @@ using MilkTeaPosManagement.Api.Routes;
 using Microsoft.AspNetCore.Authorization;
 using MilkTeaPosManagement.Api.Constants;
 using MilkTeaPosManagement.Api.Services.Implements;
+using MilkTeaPosManagement.Api.Models.AccountModel;
 
 
 namespace MilkTeaPosManagement.Api.Controllers
@@ -33,26 +34,30 @@ namespace MilkTeaPosManagement.Api.Controllers
                 Ok
             );
         }
-        //[Authorize]
-        //[HttpPut("profile")]
-        //public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
-        //{
-        //    // Get current user's email from claims
-        //    var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
-        //    if (string.IsNullOrEmpty(userEmail))
-        //    {
-        //        return Unauthorized();
-        //    }
+        [Authorize]
+        [HttpPut]
+        [Route(Router.UserRoute.UpdateAvatar)]
+        public async Task<IActionResult> UpdateAvatar(IFormFile avatarFile)
+        {
+            var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+            var result = await _accountService.UpdateAvatarAsync(userEmail, avatarFile);
+            return result.Match(
+                (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
+                Ok
+            );
+        }
+        [Authorize]
+        [HttpPut]
+        [Route(Router.UserRoute.ChangePassword)]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+            var result = await _accountService.ChangePasswordAsync(userEmail, request);
 
-        //    var result = await _accountService.UpdateProfileAsync(userEmail, request);
-
-        //    if (!result.IsSuccess)
-        //    {
-        //        return StatusCode(result.StatusCode, new { message = result.Message });
-        //    }
-
-        //    return Ok(result.Data);
-        //}
-
+            return result.Match(
+                (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
+                _ => Ok(new { message = "Password changed successfully" })
+            );
+        }
     }
 }

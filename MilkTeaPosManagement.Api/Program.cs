@@ -21,6 +21,7 @@ namespace MilkTeaPosManagement.Api
                 options.UseMySql(builder.Configuration.GetConnectionString("BlindBoxDbConnection"),
                 new MySqlServerVersion(new Version(8, 0, 37))));
             builder.Services.Configure<AuthenticationConfiguration>(builder.Configuration.GetSection("AuthenticationConfiguration"));
+            builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerConfig();
