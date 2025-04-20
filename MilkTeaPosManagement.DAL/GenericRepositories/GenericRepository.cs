@@ -103,13 +103,11 @@ namespace MilkTeaPosManagement.DAL.GenericRepositories
         {
             if (entity == null) return;
             await _dbSet.AddAsync(entity);
-            await _dbContext.SaveChangesAsync();
         }
 
         public async Task InsertRangeAsync(IEnumerable<T> entities)
         {
             await _dbSet.AddRangeAsync(entities);
-            await _dbContext.SaveChangesAsync();
         }
 
         #endregion
@@ -118,25 +116,21 @@ namespace MilkTeaPosManagement.DAL.GenericRepositories
         public void UpdateAsync(T entity)
         {
             _dbSet.Update(entity);
-            _dbContext.SaveChangesAsync();
         }
 
         public void UpdateRange(IEnumerable<T> entities)
         {
             _dbSet.UpdateRange(entities);
-            _dbContext.SaveChangesAsync();
         }
 
         public void DeleteAsync(T entity)
         {
             _dbSet.Remove(entity);
-            _dbContext.SaveChangesAsync();
         }
 
         public void DeleteRangeAsync(IEnumerable<T> entities)
         {
             _dbSet.RemoveRange(entities);
-            _dbContext.SaveChangesAsync();
         }
 
         #endregion

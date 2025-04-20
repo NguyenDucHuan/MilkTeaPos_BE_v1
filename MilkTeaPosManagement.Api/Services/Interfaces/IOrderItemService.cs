@@ -7,7 +7,7 @@ namespace MilkTeaPosManagement.Api.Services.Interfaces
     public interface IOrderItemService
     {
         Task<(ICollection<Orderitem>, List<Product>?)> GetCartAsync();
-        Task<Orderitem> ChangeProductsToCombo(int comboId);
+        Task<MethodResult<Orderitem>> ChangeProductsToCombo(int comboId);
         Task<ICollection<Orderitem>> GetOrderitemsByOrderIdAsync(int orderId);
         Task<Orderitem> GetAnOrderItemByIdAsync(int id);
         Task<MethodResult<Orderitem>> AddToCart(OrderItemRequest request);

@@ -45,7 +45,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             }
             return offers;
         }
-        public async Task<Orderitem> ChangeProductsToCombo(int comboId)
+        public async Task<MethodResult<Orderitem>> ChangeProductsToCombo(int comboId)
         {
             var combo = await _uow.GetRepository<Product>().SingleOrDefaultAsync(predicate: p => p.ProductId == comboId, include: p => p.Include(c => c.Comboltems));
             foreach (var item in combo.Comboltems)
@@ -70,7 +70,11 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 ProductId = combo.ProductId,
             };
             await _uow.GetRepository<Orderitem>().InsertAsync(orderItemModel);
-            return orderItemModel;
+            if(await _uow.CommitAsync() > 0)
+            {
+                return new MethodResult<Orderitem>.Success(orderItemModel);
+            }
+            return new MethodResult<Orderitem>.Failure("Combo not found!", StatusCodes.Status400BadRequest);
         }
         public async Task<ICollection<Orderitem>> GetOrderitemsByOrderIdAsync(int orderId)
         {
@@ -108,7 +112,12 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 ProductId = request.ProductId,
             };
             await _uow.GetRepository<Orderitem>().InsertAsync(item);
-            return new MethodResult<Orderitem>.Success(item);
+            if (await _uow.CommitAsync() > 0)
+            {
+                return new MethodResult<Orderitem>.Success(item);
+            }
+            return new MethodResult<Orderitem>.Failure("Add to cart not success", StatusCodes.Status400BadRequest);
+            
         }
         public async Task<MethodResult<Orderitem>> RemoveFromCart(int productId)
         {
@@ -131,7 +140,12 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 return new MethodResult<Orderitem>.Success(existed);
             }
             _uow.GetRepository<Orderitem>().DeleteAsync(existed);
-            return new MethodResult<Orderitem>.Success(existed);
+            if (await _uow.CommitAsync() > 0)
+            {
+                return new MethodResult<Orderitem>.Success(existed);
+            }
+            return new MethodResult<Orderitem>.Failure("Remove from cart not success!", StatusCodes.Status400BadRequest);
+            
         }
     }
 }

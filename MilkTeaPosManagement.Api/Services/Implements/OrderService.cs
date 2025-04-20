@@ -80,8 +80,13 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             };
             await _uow.GetRepository<Order>().InsertAsync(order);
             await _uow.GetRepository<Orderstatusupdate>().InsertAsync(orderStatus);
-            var setOrder =await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == order.OrderId, include: o => o.Include(od => od.Orderstatusupdates));
-            return new MethodResult<Order>.Success(setOrder);
+            if (await _uow.CommitAsync() > 0)
+            {
+                var setOrder = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == order.OrderId, include: o => o.Include(od => od.Orderstatusupdates));
+                return new MethodResult<Order>.Success(setOrder);
+            }
+            return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
+            
         }
         public async Task<MethodResult<Order>> CancelOrder(int orderId)
         {
@@ -92,8 +97,13 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             }
             orderStatus.OrderStatus = OrderConstant.CANCELED.ToString();
             _uow.GetRepository<Orderstatusupdate>().UpdateAsync(orderStatus);
-            var setOrder = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == orderId, include: o => o.Include(od => od.Orderstatusupdates));
-            return new MethodResult<Order>.Success(setOrder);
+            if (await _uow.CommitAsync() > 0)
+            {
+                var setOrder = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == orderId, include: o => o.Include(od => od.Orderstatusupdates));
+                return new MethodResult<Order>.Success(setOrder);
+            }
+            return new MethodResult<Order>.Failure("Order cannot be canceled!", StatusCodes.Status400BadRequest);
+            
         }
     }
 }
