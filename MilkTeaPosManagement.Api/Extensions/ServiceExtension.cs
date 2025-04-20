@@ -19,6 +19,7 @@ namespace MilkTeaPosManagement.Api.Extensions
             service.AddTransient<IOrderService, OrderService>();
             service.AddTransient<IOrderItemService, OrderItemService>();
             service.AddTransient<IPaymentmethodService, PaymentMethodService>();
+            service.AddTransient<ICloudinaryService, CloudinaryService>();
             return service;
         }
     }

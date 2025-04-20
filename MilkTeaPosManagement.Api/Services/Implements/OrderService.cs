@@ -18,10 +18,12 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             if (search == null || (search != null && search.PaymentMethodId == null && search.StaffId == null))
             {
                 return await _uow.GetRepository<Order>().GetPagingListAsync(orderBy: o => o.OrderByDescending(od => od.CreateAt));
-            } else if (search.StaffId == null && search.PaymentMethodId != null)
+            }
+            else if (search.StaffId == null && search.PaymentMethodId != null)
             {
                 return await _uow.GetRepository<Order>().GetPagingListAsync(orderBy: o => o.OrderByDescending(od => od.CreateAt), predicate: o => o.PaymentMethodId == search.PaymentMethodId);
-            } else if (search.StaffId != null && search.PaymentMethodId == null)
+            }
+            else if (search.StaffId != null && search.PaymentMethodId == null)
             {
                 return await _uow.GetRepository<Order>().GetPagingListAsync(orderBy: o => o.OrderByDescending(od => od.CreateAt), predicate: o => o.StaffId == search.StaffId);
             }
@@ -74,9 +76,9 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 OrderStatusUpdateId = statusId,
                 OrderStatus = OrderConstant.PENDING.ToString(),
-                OrderId = orderId,                
-                UpdatedAt = DateTime.Now,                
-                AccountId = orderRequest.StaffId                
+                OrderId = orderId,
+                UpdatedAt = DateTime.Now,
+                AccountId = orderRequest.StaffId
             };
             await _uow.GetRepository<Order>().InsertAsync(order);
             await _uow.GetRepository<Orderstatusupdate>().InsertAsync(orderStatus);
@@ -86,7 +88,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 return new MethodResult<Order>.Success(setOrder);
             }
             return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
-            
+
         }
         public async Task<MethodResult<Order>> CancelOrder(int orderId)
         {
@@ -103,7 +105,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 return new MethodResult<Order>.Success(setOrder);
             }
             return new MethodResult<Order>.Failure("Order cannot be canceled!", StatusCodes.Status400BadRequest);
-            
+
         }
     }
 }

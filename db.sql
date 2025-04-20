@@ -111,9 +111,9 @@ VALUES
 -- Insert sample data into Accounts Table with FullName
 INSERT INTO Accounts (Username, FullName, Password_hash, Email, ImageUrl, Phone, Role, Created_at, Updated_at, Status)
 VALUES 
-    ('john_doe', 'John Doe', 'hashedpassword123accounts', 'john@example.com', 'https://example.com/images/john.jpg', '1234567890', 'Manager', NOW(), NOW(), TRUE),
-    ('jane_smith', 'Jane Smith', 'hashedpassword456', 'jane@example.com', 'https://example.com/images/jane.jpg', '9876543210', 'Staff', NOW(), NOW(), TRUE),
-    ('alice_brown', 'Alice Brown', 'hashedpassword789', 'alice@example.com', 'https://example.com/images/alice.jpg', '5555555555', 'Staff', NOW(), NOW(), TRUE);
+    ('john_doe', 'John Doe', '$2a$11$A46icdJigFN1XwpE2VFfs.bvFKBtF7go.zey13OZbEJ6yzu3JppHm', 'john@example.com', 'https://example.com/images/john.jpg', '1234567890', 'Manager', NOW(), NOW(), TRUE),
+    ('jane_smith', 'Jane Smith', '$2a$11$A46icdJigFN1XwpE2VFfs.bvFKBtF7go.zey13OZbEJ6yzu3JppHm', 'jane@example.com', 'https://example.com/images/jane.jpg', '9876543210', 'Staff', NOW(), NOW(), TRUE),
+    ('alice_brown', 'Alice Brown', '$2a$11$A46icdJigFN1XwpE2VFfs.bvFKBtF7go.zey13OZbEJ6yzu3JppHm', 'alice@example.com', 'https://example.com/images/alice.jpg', '5555555555', 'Staff', NOW(), NOW(), TRUE);
 
 INSERT INTO Products (ProductName, CategoryId, Description, ImageURL, Prize, ProductType, ParentID, SizeId, Create_at, Create_by, Update_at, Update_by, Disable_at, Disable_by, Status)
 VALUES 
@@ -122,7 +122,7 @@ VALUES
     ('Chocolate Chip Cookies', 2, 'Freshly baked chocolate chip cookies', 'https://example.com/images/cookies.jpg', 3.00, 'SingleProduct', NULL, 3, NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
     ('Ice Cream Sundae', 3, 'A delicious chocolate and vanilla sundae', 'https://example.com/images/sundae.jpg', 4.50, 'SingleProduct', NULL, 4, NOW(), 1, NOW(), 1, NULL, NULL, TRUE);
 
--- Insert sample data into Comboltems Table
+-- Insert sample data into Comboltems Tablepassword
 INSERT INTO Comboltems (Combod, ProductID, Quantity, Discount, MasterID)
 VALUES
     (1, 1, 2, 10, NULL),
