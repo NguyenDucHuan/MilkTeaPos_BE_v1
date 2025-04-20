@@ -47,7 +47,11 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 Status = PaymentMethodConstant.PAYMENT_METHOD_STATUS_ACTIVE
             };
             await _uow.GetRepository<Paymentmethod>().InsertAsync(paymentMethod);
-            return new MethodResult<Paymentmethod>.Success(paymentMethod);
+            if (await _uow.CommitAsync() > 0)
+            {
+                return new MethodResult<Paymentmethod>.Success(paymentMethod);
+            }
+            return new MethodResult<Paymentmethod>.Failure("Cannot create new paymwent method!", StatusCodes.Status400BadRequest);
         }
         public async Task<MethodResult<Paymentmethod>> UpdateAPaymentmethodAsync(PaymentMethodRequest paymentMethodRequest)
         {
@@ -60,7 +64,11 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             existed.MethodName = paymentMethodRequest.MethodName;
             existed.Description = paymentMethodRequest.Description;
             _uow.GetRepository<Paymentmethod>().UpdateAsync(existed);
-            return new MethodResult<Paymentmethod>.Success(existed);
+            if (await _uow.CommitAsync() > 0)
+            {
+                return new MethodResult<Paymentmethod>.Success(existed);
+            }
+            return new MethodResult<Paymentmethod>.Failure("Cannot edit this payment method!", StatusCodes.Status400BadRequest);
         }
         public async Task<MethodResult<Paymentmethod>> DeleteAPaymentmethodAsync(int paymentmethodId)
         {
@@ -72,7 +80,11 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             }
             existed.Status = PaymentMethodConstant.PAYMENT_METHOD_STATUS_INACTIVE;
             _uow.GetRepository<Paymentmethod>().UpdateAsync(existed);
-            return new MethodResult<Paymentmethod>.Success(existed);
+            if (await _uow.CommitAsync() > 0)
+            {
+                return new MethodResult<Paymentmethod>.Success(existed);
+            }
+            return new MethodResult<Paymentmethod>.Failure("Cannot remove this payment method!", StatusCodes.Status400BadRequest);
         }
     }
 }

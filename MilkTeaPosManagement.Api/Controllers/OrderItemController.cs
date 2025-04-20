@@ -28,7 +28,10 @@ namespace MilkTeaPosManagement.Api.Controllers
         public async Task<IActionResult> ChangeProductsToCombo([FromBody] int comboId)
         {
             var result = await _service.ChangeProductsToCombo(comboId);
-            return Ok(result);
+            return result.Match(
+                 (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
+                 Ok
+             );
         }
         [HttpGet("get-by-id")]
         public async Task<IActionResult> GetById([FromBody] int orderItemId)
