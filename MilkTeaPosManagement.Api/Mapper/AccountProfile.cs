@@ -10,6 +10,8 @@ namespace MilkTeaPosManagement.Api.Mapper
         public AccountProfile()
         {
             CreateMap<Account, ProfileViewModel>();
+            CreateMap<Account, AccountViewModel>();
+
         }
 
     }

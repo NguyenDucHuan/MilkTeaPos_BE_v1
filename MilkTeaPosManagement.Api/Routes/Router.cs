@@ -20,8 +20,7 @@
             public const string GetUserById = $"{User}/{Id}";
             public const string CreateUser = $"{User}/create-user";
             public const string UpdateUser = $"{User}/update-user/{Id}";
-            public const string DeleteUser = $"{User}/delete-user/{Id}";
-
+            public const string UpdateUserStatus = $"{User}/update-user-status/{Id}";
         }
     }
 }

@@ -59,5 +59,70 @@ namespace MilkTeaPosManagement.Api.Controllers
                 _ => Ok(new { message = "Password changed successfully" })
             );
         }
+
+        //[Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
+        [HttpGet]
+        [Route(Router.UserRoute.GetAllUsers)]
+        public async Task<IActionResult> GetAllUsers([FromQuery] AccountFilterModel filter = null)
+        {
+            if (filter == null)
+            {
+                filter = new AccountFilterModel();
+            }
+
+            var users = await _accountService.GetAccountsByFilterAsync(filter);
+            return Ok(users);
+        }
+
+        //[Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
+        [HttpGet]
+        [Route(Router.UserRoute.GetUserById)]
+        public async Task<IActionResult> GetUserById([FromRoute] int id)
+        {
+            var result = await _accountService.GetAccountByIdAsync(id);
+
+            return result.Match(
+                (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
+                Ok
+            );
+        }
+
+        //[Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
+        [HttpPost]
+        [Route(Router.UserRoute.CreateUser)]
+        public async Task<IActionResult> CreateUser([FromForm] CreateUserRequest request, IFormFile avatarFile)
+        {
+            var result = await _accountService.CreateAccountAsync(request, avatarFile);
+
+            return result.Match(
+                (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
+                Ok
+            );
+        }
+
+        //[Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
+        [HttpPut]
+        [Route(Router.UserRoute.UpdateUser)]
+        public async Task<IActionResult> UpdateUser([FromRoute] int id, [FromForm] UpdateUserRequest request, IFormFile avatarFile)
+        {
+            var result = await _accountService.UpdateAccountAsync(id, request, avatarFile);
+
+            return result.Match(
+                (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
+                Ok
+            );
+        }
+        [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
+        [HttpPut]
+        [Route(Router.UserRoute.UpdateUserStatus)]
+        public async Task<IActionResult> UpdateUserStatus([FromRoute] int id)
+        {
+            var result = await _accountService.UpdateAccountStatusAsync(id);
+
+            return result.Match(
+                (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
+                Ok
+            );
+        }
     }
 }
