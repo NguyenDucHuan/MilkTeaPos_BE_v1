@@ -2,7 +2,6 @@
 using MilkTeaPosManagement.Api.Helper;
 using MilkTeaPosManagement.Api.Models.PaymentMethodModels;
 using MilkTeaPosManagement.Api.Services.Interfaces;
-using MilkTeaPosManagement.Api.ViewModels;
 using MilkTeaPosManagement.DAL.UnitOfWorks;
 using MilkTeaPosManagement.Domain.Models;
 using System;

@@ -13,16 +13,8 @@ namespace MilkTeaPosManagement.Api
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
             builder.Services.AddService().AddAuthenticationConfig();
 
-            builder.Services.AddControllers()
-                .AddJsonOptions(options =>
-                {
-                    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
-                    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-                });
             builder.Services.AddControllers();
 
             builder.Services.AddDbContext<MilTeaPosDbContext>(options =>
@@ -32,25 +24,49 @@ namespace MilkTeaPosManagement.Api
 
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerConfig();
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowFrontend", policy =>
+                {
+                    policy.WithOrigins("http://localhost:5173") // Your frontend URL
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials(); // Important for cookies/auth
+                });
+            });
+
             var assemblies = AppDomain.CurrentDomain.GetAssemblies()
                                 .Where(a => !a.IsDynamic)
                                 .ToArray();
 
             builder.Services.AddAutoMapper(assemblies);
             var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
+            app.UseExceptionHandler(appBuilder =>
+            {
+                appBuilder.Run(async context =>
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/json";
+                    await context.Response.WriteAsJsonAsync(new
+                    {
+                        error = "An unexpected error occurred"
+                    });
+                });
+            });
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
-                app.UseSwaggerUI();
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "MilkTeaPosProject.API v1");
+                });
             }
 
             app.UseHttpsRedirection();
-
+            app.UseCors("AllowFrontend");
+            app.UseAuthentication();
             app.UseAuthorization();
-
-
             app.MapControllers();
 
             app.Run();

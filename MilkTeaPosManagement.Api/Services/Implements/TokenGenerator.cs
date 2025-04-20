@@ -41,6 +41,7 @@ namespace MilkTeaPosManagement.Api.Models.AuthenticationModels
             [
                 new Claim(ClaimTypes.Sid, user.AccountId.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Name, user.Username),
                 new Claim(ClaimTypes.Role, user.Role)
             ];
             DateTime expirationTime = DateTime.UtcNow.AddMinutes(_configuration.AccessTokenExpiration);

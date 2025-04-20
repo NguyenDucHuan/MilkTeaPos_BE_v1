@@ -3,9 +3,9 @@ using AutoMapper;
 using MilkTeaPosManagement.Api.Helper;
 using MilkTeaPosManagement.Api.Models.AuthenticationModels;
 using MilkTeaPosManagement.Api.Services.Interfaces;
-using MilkTeaPosManagement.Api.ViewModels;
 using MilkTeaPosManagement.DAL.UnitOfWorks;
 using MilkTeaPosManagement.Api.Constants;
+using MilkTeaPosManagement.Api.Models.ViewModels;
 
 
 namespace MilkTeaPosManagement.Api.Services.Implements
@@ -14,30 +14,29 @@ namespace MilkTeaPosManagement.Api.Services.Implements
     {
         private readonly IUnitOfWork _uow;
         private readonly ITokenGenerator _tokenGenerator;
-        private readonly IUserService _userService;
+        private readonly IAccountService _accountService;
         private readonly IMapper _mapper;
 
         public AuthenticationService(IUnitOfWork uow, ITokenGenerator tokenGenerator,
-            IUserService userService, IMapper mapper)
+            IAccountService accountService, IMapper mapper)
         {
             _uow = uow;
             _tokenGenerator = tokenGenerator;
-            _userService = userService;
+            _accountService = accountService;
             _mapper = mapper;
         }
 
 
         public async Task<MethodResult<SignInViewModel>> SigninAsync(LoginRequest request)
         {
-            var user = await _userService.GetUserByUserNameOrEmailAsync(request.Email);
+            var user = await _accountService.GetUserByPhoneOrEmailAsync(request.PhoneOrEmail);
             if (user == null)
             {
                 return new MethodResult<SignInViewModel>.Failure("Invalid email", StatusCodes.Status400BadRequest);
             }
 
-            //var correctedPassword = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
-            var correctedPassword = string.Equals(request.Password, user.PasswordHash, StringComparison.OrdinalIgnoreCase);
-            if (!correctedPassword)
+            var passwordVerified = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
+            if (!passwordVerified)
             {
                 return new MethodResult<SignInViewModel>.Failure("Password is not correct", 400);
             }

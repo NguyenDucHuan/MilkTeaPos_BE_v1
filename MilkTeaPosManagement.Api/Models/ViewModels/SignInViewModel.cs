@@ -1,6 +1,6 @@
 ﻿using MilkTeaPosManagement.Api.Models.AuthenticationModels;
 
-namespace MilkTeaPosManagement.Api.ViewModels
+namespace MilkTeaPosManagement.Api.Models.ViewModels
 {
     public class SignInViewModel
     {

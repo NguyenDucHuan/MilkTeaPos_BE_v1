@@ -2,10 +2,12 @@
 using MilkTeaPosManagement.Api.Routes;
 using MilkTeaPosManagement.Api.Services.Interfaces;
 using MilkTeaPosManagement.Api.Models.AuthenticationModels;
+using Microsoft.AspNetCore.Authorization;
+using MilkTeaPosManagement.Api.Constants;
 
 namespace MilkTeaPosManagement.Api.Controllers
 {
-    public class AuthenticationController : Controller
+    public class AuthenticationController : ControllerBase
     {
         private readonly IAuthenticationService _authenticationService;
 
