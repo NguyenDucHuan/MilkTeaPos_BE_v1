@@ -32,6 +32,19 @@ namespace MilkTeaPosManagement.Api
 
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerConfig();
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowFrontend", policy =>
+                {
+                    policy.WithOrigins("http://localhost:5173") // Your frontend URL
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials(); // Important for cookies/auth
+                });
+            });
+
+
             var assemblies = AppDomain.CurrentDomain.GetAssemblies()
                                 .Where(a => !a.IsDynamic)
                                 .ToArray();
