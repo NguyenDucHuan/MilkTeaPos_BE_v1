@@ -42,5 +42,14 @@ namespace MilkTeaPosManagement.Api.Controllers
                 Ok
             );
         }
+        [HttpPut]
+        public async Task<IActionResult> update([FromBody] int orderId)
+        {
+            var result = await _service.ConfirmOrder(orderId);
+            return result.Match(
+                (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
+                Ok
+            );
+        }
     }
 }
