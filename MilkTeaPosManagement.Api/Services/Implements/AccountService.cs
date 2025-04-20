@@ -9,8 +9,8 @@ using MilkTeaPosManagement.Api.Models.AccountModel;
 using MilkTeaPosManagement.Api.Constants;
 using MilkTeaPosManagement.Domain.Paginate;
 using Microsoft.EntityFrameworkCore;
-using MilkTeaPosManagement.Api.Extensions;
 using System;
+using MilkTeaPosManagement.Api.Extensions.Filter;
 
 
 namespace MilkTeaPosManagement.Api.Services.Implements
