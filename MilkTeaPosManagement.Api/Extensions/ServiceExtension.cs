@@ -16,6 +16,9 @@ namespace MilkTeaPosManagement.Api.Extensions
             service.AddTransient(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             service.AddTransient<IAccountService, AccountService>();
             service.AddTransient<IAuthenticationService, AuthenticationService>();
+            service.AddTransient<IOrderService, OrderService>();
+            service.AddTransient<IOrderItemService, OrderItemService>();
+            service.AddTransient<IPaymentmethodService, PaymentMethodService>();
             return service;
         }
     }

@@ -6,7 +6,7 @@ namespace MilkTeaPosManagement.Api.Services.Interfaces
 {
     public interface IAccountService
     {
-        Task<Account> GetUserByUserNameOrEmailAsync(string UserNameOrEmail);
+        Task<Account> GetUserByPhoneOrEmailAsync(string PhoneOrEmail);
         Task<MethodResult<ProfileViewModel>> GetProfileAsync(string email);
     }
 }

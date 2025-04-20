@@ -29,15 +29,14 @@ namespace MilkTeaPosManagement.Api.Services.Implements
 
         public async Task<MethodResult<SignInViewModel>> SigninAsync(LoginRequest request)
         {
-            var user = await _accountService.GetUserByUserNameOrEmailAsync(request.Email);
+            var user = await _accountService.GetUserByPhoneOrEmailAsync(request.PhoneOrEmail);
             if (user == null)
             {
                 return new MethodResult<SignInViewModel>.Failure("Invalid email", StatusCodes.Status400BadRequest);
             }
 
-            //var correctedPassword = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
-            var correctedPassword = string.Equals(request.Password, user.PasswordHash, StringComparison.OrdinalIgnoreCase);
-            if (!correctedPassword)
+            var passwordVerified = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
+            if (!passwordVerified)
             {
                 return new MethodResult<SignInViewModel>.Failure("Password is not correct", 400);
             }

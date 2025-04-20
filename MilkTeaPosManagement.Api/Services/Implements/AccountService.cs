@@ -31,10 +31,10 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             return new MethodResult<ProfileViewModel>.Success(result);
         }
 
-        public async Task<Account> GetUserByUserNameOrEmailAsync(string UserNameOrEmail)
+        public async Task<Account> GetUserByPhoneOrEmailAsync(string PhoneOrEmail)
         {
             return await _uow.GetRepository<Account>().SingleOrDefaultAsync(
-                predicate: p => p.Email == UserNameOrEmail || p.Username == UserNameOrEmail
+                predicate: p => p.Email == PhoneOrEmail || p.Phone == PhoneOrEmail
             );
         }
     }
