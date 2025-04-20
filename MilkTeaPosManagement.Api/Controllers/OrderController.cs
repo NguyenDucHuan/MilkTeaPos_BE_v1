@@ -18,7 +18,7 @@ namespace MilkTeaPosManagement.Api.Controllers
             var result = await _service.GetAllOrders(searchModel);
             return Ok(result);
         }
-        [HttpGet("get-by-id")]
+        [HttpGet("get-by-id/{id}")]
         public async Task<IActionResult> Get([FromBody] int orderId)
         {
             var result = await _service.GetOrderDetail(orderId);

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MilkTeaPosManagement.Api.Helper;
+using MilkTeaPosManagement.Api.Models.OrderItemModels;
 using MilkTeaPosManagement.Api.Services.Interfaces;
 using MilkTeaPosManagement.DAL.UnitOfWorks;
 using MilkTeaPosManagement.Domain.Models;
@@ -10,10 +11,9 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace MilkTeaPosManagement.Api.Services.Implements
 {
-    public class StatisticService(IUnitOfWork uow, DbSet<Orderitem> dbSet) : IStatisticService
+    public class StatisticService(IUnitOfWork uow) : IStatisticService
     {
         private readonly IUnitOfWork _uow = uow;
-        private readonly DbSet<Orderitem> _dbSet = dbSet;
         public async Task<(List<object>, List<object>, int, decimal?)> OrderStatisticsByDate(DateTime? date)
         {
             var dateData = date == null ? DateTime.Now : date;
@@ -27,8 +27,8 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 var orders = await _uow.GetRepository<Order>().GetListAsync(predicate: o => o.CreateAt.Value.Year == dateData.Value.Year && o.CreateAt.Value.Month == dateData.Value.Month && o.CreateAt.Value.Day == dateData.Value.Day 
                                                                                             && (o.CreateAt.Value.Hour == starttime.Hour || o.CreateAt.Value.Hour == starttime.AddHours(1).Hour));
                 decimal? totalAmount = 0;
-                if (orders != null && orders.Count > 0)
-                {
+                //if (orders != null && orders.Count > 0)
+                //{
                     foreach (var order in orders)
                     {
                         totalAmount += order.TotalAmount;
@@ -45,7 +45,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         label = starttime.ToString("HH:mm") + " - " + starttime.AddHours(2).ToString("HH:mm"),
                         value = totalAmount
                     });
-                }                
+                //}                
                 starttime = starttime.AddHours(2);
             }
             
@@ -76,8 +76,8 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 var orders = await _uow.GetRepository<Order>().GetListAsync(predicate: o => o.CreateAt.Value.Year == fromDate.Value.Year && o.CreateAt.Value.Month == fromDate.Value.Month && o.CreateAt.Value.Day == fromDate.Value.Day
                                                                                             && o.CreateAt.Value.Day == fromDate.Value.Day);
                 decimal? totalAmount = 0;
-                if (orders != null && orders.Count > 0)
-                {
+                //if (orders != null && orders.Count > 0)
+                //{
                     foreach (var order in orders)
                     {
                         totalAmount += order.TotalAmount;
@@ -94,7 +94,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         label = fromDate.Value.ToString("dd/MM"),
                         value = totalAmount
                     });
-                }
+                //}
                 fromDate = fromDate.Value.AddDays(1);
             }
             return (orderResult, amountResult, totalOrigin, totalProfit);
@@ -116,8 +116,8 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 var orders = await _uow.GetRepository<Order>().GetListAsync(predicate: o => o.CreateAt.Value.Year == startDate.Year && o.CreateAt.Value.Month == startDate.Month
                                                                                             && o.CreateAt.Value.Day == startDate.Day);
                 decimal? totalAmount = 0;
-                if (orders != null && orders.Count > 0)
-                {
+                //if (orders != null && orders.Count > 0)
+                //{
                     foreach (var order in orders)
                     {
                         totalAmount += order.TotalAmount;
@@ -134,7 +134,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         label = startDate.ToString("dd/MM"),
                         value = totalAmount
                     });
-                }
+                //}
                 startDate = startDate.AddDays(1);
             }
             return (orderResult, amountResult, totalOrigin, totalProfit);
@@ -154,8 +154,8 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 var orders = await _uow.GetRepository<Order>().GetListAsync(predicate: o => o.CreateAt.Value.Year == startDate.Year
                                                                                             && o.CreateAt.Value.Month == startDate.Month);
                 decimal? totalAmount = 0;
-                if (orders != null && orders.Count > 0)
-                {
+                //if (orders != null && orders.Count > 0)
+                //{
                     foreach (var order in orders)
                     {
                         totalAmount += order.TotalAmount;
@@ -172,29 +172,47 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         label = startDate.ToString("MM"),
                         value = totalAmount
                     });
-                }
+                //}
                 startDate = startDate.AddMonths(1);
             }
             return (orderResult, amountResult, totalOrigin, totalProfit);
         }
-        public async Task<List<object>> GetBestSeller(int number)
+        public async Task<IEnumerable<SellProductModel>> GetBestSeller(int number)
         {
-            var productSum = await _dbSet.GroupBy(oi => oi.ProductId)
-                                        .Select(group => new
-                                        {
-                                            ProductId = group.Key,
-                                            Sum = group.Sum(oi => oi.Quantity)
-                                        }).OrderBy(oi => oi.Sum).Take(number).ToListAsync();            
-            var bestSellers = new List<object>();
-            foreach (var group in productSum)
+            //var productSum = await _dbSet.GroupBy(oi => oi.ProductId)
+            //                            .Select(group => new
+            //                            {
+            //                                ProductId = group.Key,
+            //                                Sum = group.Sum(oi => oi.Quantity)
+            //                            }).OrderBy(oi => oi.Sum).Take(number).ToListAsync();
+            //var bestSellers = new List<object>();
+            //foreach (var group in productSum)
+            //{
+            //    var product = await _uow.GetRepository<Product>().SingleOrDefaultAsync(predicate: p => p.ProductId == group.ProductId);
+            //    bestSellers.Add(new
+            //    {
+            //        Product = product,
+            //        Quatity = group.Sum
+            //    });
+            //}
+            //return bestSellers;
+            var productSum = new List<SellProductModel>();
+            var products = await _uow.GetRepository<Product>().GetListAsync();
+            foreach (var product in products)
             {
-                var product = await _uow.GetRepository<Product>().SingleOrDefaultAsync(predicate: p => p.ProductId == group.ProductId);
-                bestSellers.Add(new
+                int? sum = 0;
+                var orderItems = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.ProductId == product.ProductId);
+                foreach (var item in orderItems)
+                {
+                    sum += item.Quantity;
+                }
+                productSum.Add(new SellProductModel
                 {
                     Product = product,
-                    Quatity = group.Sum
+                    TotalQuantitySold = sum
                 });
             }
+            var bestSellers = productSum.OrderBy(ps => ps.TotalQuantitySold).Take(number);
             return bestSellers;
         }
     }

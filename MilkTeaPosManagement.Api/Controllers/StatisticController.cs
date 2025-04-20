@@ -9,31 +9,55 @@ namespace MilkTeaPosManagement.Api.Controllers
     {
         private readonly IStatisticService _service = service;
         [HttpGet("by-date")]
-        public async Task<IActionResult> GetByDate([FromBody] DateTime? date)
+        public async Task<IActionResult> GetByDate(DateTime? date)
         {
             var result = await _service.OrderStatisticsByDate(date);
-            return Ok(result);
+            return Ok(new
+            {
+                orderChart = result.Item1,
+                revenueChart = result.Item2,
+                totalOrder = result.Item3,
+                totalRevenue = result.Item4
+            });
         }
         [HttpGet("by-week")]
-        public async Task<IActionResult> GetByWeek([FromBody] DateTime? fromDate, DateTime? toDate)
+        public async Task<IActionResult> GetByWeek(DateTime? fromDate, DateTime? toDate)
         {
             var result = await _service.OrderStatisticsByWeek(fromDate, toDate);
-            return Ok(result);
+            return Ok(new
+            {
+                orderChart = result.Item1,
+                revenueChart = result.Item2,
+                totalOrder = result.Item3,
+                totalRevenue = result.Item4
+            });
         }
         [HttpGet("by-month")]
-        public async Task<IActionResult> GetByMonth([FromBody] int? month, int? year)
+        public async Task<IActionResult> GetByMonth(int? month, int? year)
         {
             var result = await _service.OrderStatisticsByMonth(month, year);
-            return Ok(result);
+            return Ok(new
+            {
+                orderChart = result.Item1,
+                revenueChart = result.Item2,
+                totalOrder = result.Item3,
+                totalRevenue = result.Item4
+            });
         }
         [HttpGet("by-year")]
-        public async Task<IActionResult> GetByYear([FromBody] int? year)
+        public async Task<IActionResult> GetByYear(int? year)
         {
             var result = await _service.OrderStatisticsByYear(year);
-            return Ok(result);
+            return Ok(new
+            {
+                orderChart = result.Item1,
+                revenueChart = result.Item2,
+                totalOrder = result.Item3,
+                totalRevenue = result.Item4
+            });
         }
         [HttpGet("best-seller")]
-        public async Task<IActionResult> GetBestSellers([FromBody] int number)
+        public async Task<IActionResult> GetBestSellers(int number)
         {
             var result = await _service.GetBestSeller(number);
             return Ok(result);

@@ -1,4 +1,5 @@
 ﻿using MilkTeaPosManagement.Api.Helper;
+using MilkTeaPosManagement.Api.Models.OrderItemModels;
 using MilkTeaPosManagement.Domain.Models;
 
 namespace MilkTeaPosManagement.Api.Services.Interfaces
@@ -9,6 +10,6 @@ namespace MilkTeaPosManagement.Api.Services.Interfaces
         Task<(List<object>, List<object>, int, decimal?)> OrderStatisticsByWeek(DateTime? fromDate, DateTime? toDate);
         Task<(List<object>, List<object>, int, decimal?)> OrderStatisticsByMonth(int? month, int? year);
         Task<(List<object>, List<object>, int, decimal?)> OrderStatisticsByYear(int? year);
-        Task<List<object>> GetBestSeller(int number);
+        Task<IEnumerable<SellProductModel>> GetBestSeller(int number);
     }
 }
