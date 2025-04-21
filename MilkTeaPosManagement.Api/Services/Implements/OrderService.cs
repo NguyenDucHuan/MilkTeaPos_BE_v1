@@ -7,10 +7,11 @@ using MilkTeaPosManagement.Api.Services.Interfaces;
 using MilkTeaPosManagement.DAL.UnitOfWorks;
 using MilkTeaPosManagement.Domain.Models;
 using MilkTeaPosManagement.Domain.Paginate;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace MilkTeaPosManagement.Api.Services.Implements
 {
-    public class OrderService(IUnitOfWork uow) : IOrderService
+    public class OrderService(IUnitOfWork uow, IHttpContextAccessor _httpContextAccessor) : IOrderService
     {
         private readonly IUnitOfWork _uow = uow;
         public async Task<IPaginate<Order>> GetAllOrders(OrderSearchModel? search)
@@ -53,6 +54,11 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 return new MethodResult<Order>.Failure("Order not have any product!", StatusCodes.Status400BadRequest);
             }
+            var account = await GetCurrentUser();
+            if (account == null)
+            {
+                return new MethodResult<Order>.Failure("Login required!", StatusCodes.Status400BadRequest);
+            }
             foreach (var item in orderItems)
             {
                 totalAmount += item.Price;
@@ -65,7 +71,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 TotalAmount = totalAmount,
                 CreateAt = DateTime.Now,
                 Note = orderRequest.Note,
-                StaffId = orderRequest.StaffId,
+                StaffId = account.AccountId,
                 PaymentMethodId = orderRequest.PaymentMethodId
             };
             var status = await _uow.GetRepository<Orderstatusupdate>().GetListAsync();
@@ -73,10 +79,10 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             var orderStatus = new Orderstatusupdate
             {
                 OrderStatusUpdateId = statusId,
-                OrderStatus = OrderConstant.PENDING.ToString(),
+                OrderStatus = OrderConstant.PROCCESSING.ToString(),
                 OrderId = orderId,                
                 UpdatedAt = DateTime.Now,                
-                AccountId = orderRequest.StaffId                
+                AccountId = account.AccountId                
             };
             await _uow.GetRepository<Order>().InsertAsync(order);
             await _uow.GetRepository<Orderstatusupdate>().InsertAsync(orderStatus);
@@ -120,7 +126,34 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 return new MethodResult<Order>.Success(setOrder);
             }
             return new MethodResult<Order>.Failure("Order cannot be paid!", StatusCodes.Status400BadRequest);
+        }
 
+        public async Task<Account?> GetCurrentUser()
+        {
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext != null && httpContext.Request.Headers.ContainsKey("Authorization"))
+            {
+                var token = httpContext.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+                if (token == "null")
+                {
+                    return null;
+                }
+                if (!string.IsNullOrEmpty(token))
+                {
+                    var handler = new JwtSecurityTokenHandler();
+                    var jwtToken = handler.ReadJwtToken(token);
+                    var idClaim = jwtToken.Claims.FirstOrDefault(claim => claim.Type == "sid");
+                    if (idClaim != null)
+                    {
+                        var account = await _uow.GetRepository<Account>().SingleOrDefaultAsync(predicate: a => a.AccountId.ToString().Equals(idClaim.Value));
+                        if (account != null)
+                        {
+                            return account;
+                        }
+                    }
+                }
+            }
+            return null;
         }
     }
 }
