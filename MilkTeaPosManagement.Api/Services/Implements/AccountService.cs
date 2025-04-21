@@ -118,7 +118,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
         {
             if (filter == null)
                 filter = new AccountFilterModel();
-            var predicate = filter.BuildFilterExpression();
+            var predicate = filter.BuildAccountFilterExpression();
             return await _uow.GetRepository<Account>().GetPagingListAsync(
                 selector: user => _mapper.Map<AccountViewModel>(user),
                 predicate: predicate,

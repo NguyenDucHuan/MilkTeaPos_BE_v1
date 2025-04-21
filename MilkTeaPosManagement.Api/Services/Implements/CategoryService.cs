@@ -27,19 +27,14 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             if (filter == null)
                 filter = new CategoryFilterModel();
 
-            Expression<Func<Category, bool>> predicate = c => true;
+            string searchTerm = filter.SearchTerm?.ToLower() ?? string.Empty;
 
-            if (!string.IsNullOrWhiteSpace(filter.SearchTerm))
-            {
-                string searchTerm = filter.SearchTerm.ToLower();
-                predicate = c =>
-                    (c.CategoryName != null && c.CategoryName.ToLower().Contains(searchTerm)) ||
-                    (c.Description != null && c.Description.ToLower().Contains(searchTerm));
-            }
-            if (filter.Status.HasValue)
-            {
-                predicate = c => c.Status == filter.Status.Value;
-            }
+            Expression<Func<Category, bool>> predicate = c =>
+                (string.IsNullOrWhiteSpace(searchTerm) ||
+                 (c.CategoryName != null && c.CategoryName.ToLower().Contains(searchTerm)) ||
+                 (c.Description != null && c.Description.ToLower().Contains(searchTerm))) &&
+                (!filter.Status.HasValue || c.Status == filter.Status.Value);
+
             return await _uow.GetRepository<Category>().GetPagingListAsync(
                 selector: category => _mapper.Map<CategoryViewModel>(category),
                 predicate: predicate,
@@ -125,8 +120,6 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         StatusCodes.Status404NotFound
                     );
                 }
-
-                // Check if new name is already taken by another category
                 if (!string.IsNullOrEmpty(request.CategoryName) && request.CategoryName != category.CategoryName)
                 {
                     var nameExists = await _uow.GetRepository<Category>().SingleOrDefaultAsync(
@@ -142,7 +135,6 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     }
                 }
 
-                // Update category properties
                 if (!string.IsNullOrEmpty(request.CategoryName))
                     category.CategoryName = request.CategoryName;
 
@@ -190,7 +182,6 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     );
                 }
 
-                // Check if category has associated products
                 if (category.Products.Any())
                 {
                     return new MethodResult<bool>.Failure(

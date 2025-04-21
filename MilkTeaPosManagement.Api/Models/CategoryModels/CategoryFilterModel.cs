@@ -4,7 +4,7 @@ namespace MilkTeaPosManagement.Api.Models.CategoryModels
 {
     public class CategoryFilterModel
     {
-        public string SearchTerm { get; set; }
+        public string? SearchTerm { get; set; }
         public bool? Status { get; set; }
         public string SortBy { get; set; } = "categoryid";
         public bool SortAscending { get; set; } = true;
