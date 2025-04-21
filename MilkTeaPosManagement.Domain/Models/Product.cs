@@ -21,7 +21,7 @@ public partial class Product
 
     public int? ParentId { get; set; }
 
-    public int? SizeId { get; set; }
+    public string? SizeId { get; set; }
 
     public DateTime? CreateAt { get; set; }
 

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using MilkTeaPosManagement.Api.Helper;
 using MilkTeaPosManagement.Api.Models.CategoryModels;
 using MilkTeaPosManagement.Api.Models.ViewModels;
@@ -8,6 +9,7 @@ using MilkTeaPosManagement.Domain.Models;
 using MilkTeaPosManagement.Domain.Paginate;
 using System.Linq.Expressions;
 using MilkTeaPosManagement.Api.Extensions.Filter;
+using MilkTeaPosManagement.Api.Constants;
 
 namespace MilkTeaPosManagement.Api.Services.Implements
 {
@@ -15,11 +17,13 @@ namespace MilkTeaPosManagement.Api.Services.Implements
     {
         private readonly IUnitOfWork _uow;
         private readonly IMapper _mapper;
+        private readonly ICloudinaryService _cloudinaryService;
 
-        public CategoryService(IUnitOfWork uow, IMapper mapper)
+        public CategoryService(IUnitOfWork uow, IMapper mapper, ICloudinaryService cloudinaryService)
         {
             _uow = uow;
             _mapper = mapper;
+            _cloudinaryService = cloudinaryService;
         }
 
         public async Task<IPaginate<CategoryViewModel>> GetCategoriesByFilterAsync(CategoryFilterModel filter)
@@ -43,6 +47,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 size: filter.PageSize
             );
         }
+
         public async Task<MethodResult<CategoryViewModel>> GetCategoryByIdAsync(int id)
         {
             var category = await _uow.GetRepository<Category>().SingleOrDefaultAsync(
@@ -62,7 +67,6 @@ namespace MilkTeaPosManagement.Api.Services.Implements
         {
             try
             {
-                // Check if category with same name already exists
                 var existingCategory = await _uow.GetRepository<Category>().SingleOrDefaultAsync(
                     predicate: c => c.CategoryName == request.CategoryName
                 );
@@ -75,11 +79,25 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     );
                 }
 
-                // Create new category
+                string imageUrl = null;
+                if (request.ImageFile != null)
+                {
+                    imageUrl = await _cloudinaryService.UploadImageAsync(request.ImageFile);
+
+                    if (string.IsNullOrEmpty(imageUrl))
+                    {
+                        return new MethodResult<CategoryViewModel>.Failure(
+                            "Failed to upload image",
+                            StatusCodes.Status500InternalServerError
+                        );
+                    }
+                }
+
                 var category = new Category
                 {
                     CategoryName = request.CategoryName,
                     Description = request.Description,
+                    ImageUrl = imageUrl,
                     Status = request.Status
                 };
 
@@ -120,6 +138,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         StatusCodes.Status404NotFound
                     );
                 }
+
                 if (!string.IsNullOrEmpty(request.CategoryName) && request.CategoryName != category.CategoryName)
                 {
                     var nameExists = await _uow.GetRepository<Category>().SingleOrDefaultAsync(
@@ -133,6 +152,20 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                             StatusCodes.Status400BadRequest
                         );
                     }
+                }
+                if (request.ImageFile != null)
+                {
+                    string imageUrl = await _cloudinaryService.UploadImageAsync(request.ImageFile);
+
+                    if (string.IsNullOrEmpty(imageUrl))
+                    {
+                        return new MethodResult<CategoryViewModel>.Failure(
+                            "Failed to upload image",
+                            StatusCodes.Status500InternalServerError
+                        );
+                    }
+
+                    category.ImageUrl = imageUrl;
                 }
 
                 if (!string.IsNullOrEmpty(request.CategoryName))
@@ -177,10 +210,19 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 if (category == null)
                 {
                     return new MethodResult<bool>.Failure(
-                        "Category not found",
+                        "category not found",
                         StatusCodes.Status404NotFound
                     );
                 }
+                if (category.Status == false)
+                {
+                    category.Status = true;
+                }
+                else
+                {
+                    category.Status = false;
+                }
+                _uow.GetRepository<Category>().UpdateAsync(category);
 
                 if (category.Products.Any())
                 {

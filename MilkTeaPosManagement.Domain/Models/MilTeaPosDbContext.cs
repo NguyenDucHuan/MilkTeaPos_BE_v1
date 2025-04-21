@@ -88,6 +88,7 @@ public partial class MilTeaPosDbContext : DbContext
 
             entity.Property(e => e.CategoryName).HasMaxLength(50);
             entity.Property(e => e.Description).HasMaxLength(200);
+            entity.Property(e => e.ImageUrl).HasMaxLength(255);
         });
 
         modelBuilder.Entity<Comboltem>(entity =>
@@ -212,6 +213,7 @@ public partial class MilTeaPosDbContext : DbContext
             entity.Property(e => e.Prize).HasPrecision(10, 2);
             entity.Property(e => e.ProductName).HasMaxLength(100);
             entity.Property(e => e.ProductType).HasColumnType("enum('MaterProduct','SingleProduct','Extra','Combo')");
+            entity.Property(e => e.SizeId).HasColumnType("enum('Parent','Small','Medium','Large')");
             entity.Property(e => e.UpdateAt)
                 .HasColumnType("datetime")
                 .HasColumnName("Update_at");
