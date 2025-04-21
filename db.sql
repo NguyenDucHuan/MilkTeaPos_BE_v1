@@ -8,6 +8,7 @@ CREATE TABLE Categories (
     CategoryId INT AUTO_INCREMENT PRIMARY KEY,
     CategoryName VARCHAR(50),
     Description VARCHAR(200),
+    ImageUrl VARCHAR(255),
     Status BOOLEAN
 );
 
@@ -36,7 +37,7 @@ CREATE TABLE Products (
     Prize DECIMAL(10, 2),
     ProductType ENUM('MaterProduct', 'SingleProduct', 'Extra', 'Combo'),
     ParentID INT,
-    SizeId INT,
+    SizeId ENUM('Parent', 'Small', 'Medium', 'Large'),
     Create_at DATETIME,
     Create_by INT,
     Update_at DATETIME,
@@ -117,10 +118,10 @@ VALUES
 
 INSERT INTO Products (ProductName, CategoryId, Description, ImageURL, Prize, ProductType, ParentID, SizeId, Create_at, Create_by, Update_at, Update_by, Disable_at, Disable_by, Status)
 VALUES 
-    ('Milk Tea', 1, 'Delicious milk tea with tapioca pearls', 'https://example.com/images/milk_tea.jpg', 5.99, 'SingleProduct', NULL, 1, NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
-    ('Bubble Tea', 1, 'Classic bubble tea with fruit flavors', 'https://example.com/images/bubble_tea.jpg', 6.50, 'SingleProduct', NULL, 2, NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
-    ('Chocolate Chip Cookies', 2, 'Freshly baked chocolate chip cookies', 'https://example.com/images/cookies.jpg', 3.00, 'SingleProduct', NULL, 3, NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
-    ('Ice Cream Sundae', 3, 'A delicious chocolate and vanilla sundae', 'https://example.com/images/sundae.jpg', 4.50, 'SingleProduct', NULL, 4, NOW(), 1, NOW(), 1, NULL, NULL, TRUE);
+    ('Milk Tea', 1, 'Delicious milk tea with tapioca pearls', 'https://example.com/images/milk_tea.jpg', 5.99, 'SingleProduct', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Bubble Tea', 1, 'Classic bubble tea with fruit flavors', 'https://example.com/images/bubble_tea.jpg', 6.50, 'SingleProduct', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Chocolate Chip Cookies', 2, 'Freshly baked chocolate chip cookies', 'https://example.com/images/cookies.jpg', 3.00, 'SingleProduct', NULL,'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Ice Cream Sundae', 3, 'A delicious chocolate and vanilla sundae', 'https://example.com/images/sundae.jpg', 4.50, 'SingleProduct', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE);
 
 -- Insert sample data into Comboltems Tablepassword
 INSERT INTO Comboltems (Combod, ProductID, Quantity, Discount, MasterID)

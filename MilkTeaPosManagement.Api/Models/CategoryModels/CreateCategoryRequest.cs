@@ -9,6 +9,7 @@ namespace MilkTeaPosManagement.Api.Models.CategoryModels
 
         public string Description { get; set; }
 
+        public IFormFile ImageFile { get; set; }
         public bool Status { get; set; } = true;
     }
 }
