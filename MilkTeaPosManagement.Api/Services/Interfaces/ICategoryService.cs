@@ -7,7 +7,7 @@ namespace MilkTeaPosManagement.Api.Services.Interfaces
 {
     public interface ICategoryService
     {
-        Task<IPaginate<CategoryViewModel>> GetCategoriesByFilterAsync(CategoryFilterModel filter)
+        Task<IPaginate<CategoryViewModel>> GetCategoriesByFilterAsync(CategoryFilterModel filter);
         Task<MethodResult<CategoryViewModel>> GetCategoryByIdAsync(int id);
         Task<MethodResult<CategoryViewModel>> CreateCategoryAsync(CreateCategoryRequest request);
         Task<MethodResult<CategoryViewModel>> UpdateCategoryAsync(int id, UpdateCategoryRequest request);
