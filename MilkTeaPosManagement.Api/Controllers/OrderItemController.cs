@@ -8,7 +8,6 @@ namespace MilkTeaPosManagement.Api.Controllers
 {
     [Route("api/order-item")]
     [ApiController]
-    [Authorize]
     public class OrderItemController(IOrderItemService service) : ControllerBase
     {
         private readonly IOrderItemService _service = service;
@@ -16,7 +15,11 @@ namespace MilkTeaPosManagement.Api.Controllers
         public async Task<IActionResult> GetCart()
         {
             var result = await _service.GetCartAsync();
-            return Ok(result);
+            return Ok(new
+            {
+                cart = result.Item1,
+                offer = result.Item2
+            });
         }
         [HttpGet("get-by-order-id/{orderId}")]
         public async Task<IActionResult> GetByOrderId([FromRoute] int orderId)
@@ -49,9 +52,9 @@ namespace MilkTeaPosManagement.Api.Controllers
             );
         }        
         [HttpDelete("remove-from-cart")]
-        public async Task<IActionResult> Delete([FromBody] int productId)
+        public async Task<IActionResult> Delete(int productId, int quantity)
         {
-            var result = await _service.RemoveFromCart(productId);
+            var result = await _service.RemoveFromCart(productId, quantity);
             return result.Match(
                 (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
                 Ok

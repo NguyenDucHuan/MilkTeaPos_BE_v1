@@ -8,7 +8,6 @@ namespace MilkTeaPosManagement.Api.Controllers
 {
     [Route("api/order")]
     [ApiController]
-    [Authorize]
     public class OrderController(IOrderService service) : ControllerBase
     {
         private readonly IOrderService _service = service;

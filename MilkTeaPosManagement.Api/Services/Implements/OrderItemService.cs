@@ -96,7 +96,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             }
             if (existed != null)
             {
-                existed.Quantity+= request.Quantity;             
+                existed.Quantity += request.Quantity;             
                 existed.Price += product.Prize * request.Quantity;
                 _uow.GetRepository<Orderitem>().UpdateAsync(existed);
                 if (await _uow.CommitAsync() > 0)
@@ -105,11 +105,11 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 }                
             }
             var items = await _uow.GetRepository<Orderitem>().GetListAsync();
-            var itemId = items.Count > 0 ? items.Last().OrderItemId + 1 : 1;
+            var itemId = items != null && items.Count > 0 ? items.Last().OrderItemId + 1 : 1;
             var item = new Orderitem
             {
                 OrderItemId = itemId,
-                Quantity = 1,
+                Quantity = request.Quantity,
                 Price = product.Prize,
                 MasterId = request.MasterId,
                 ProductId = request.ProductId,
