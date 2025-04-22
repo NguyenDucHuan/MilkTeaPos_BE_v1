@@ -18,7 +18,7 @@ namespace MilkTeaPosManagement.Api.Controllers
             return Ok(result);
         }
         [HttpGet("get-by-id/{paymentMethodId}")]
-        public async Task<IActionResult> GetById([FromBody] int paymentMethodId)
+        public async Task<IActionResult> GetById(int paymentMethodId)
         {
             var result = await _service.GetPaymentmethodByIdAsync(paymentMethodId);
             return Ok(result);

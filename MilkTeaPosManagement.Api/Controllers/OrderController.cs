@@ -12,13 +12,13 @@ namespace MilkTeaPosManagement.Api.Controllers
     {
         private readonly IOrderService _service = service;
         [HttpGet("")]
-        public async Task<IActionResult> GetAll([FromBody] OrderSearchModel? searchModel)
+        public async Task<IActionResult> GetAll(OrderSearchModel? searchModel)
         {
             var result = await _service.GetAllOrders(searchModel);
             return Ok(result);
         }
         [HttpGet("get-by-id/{id}")]
-        public async Task<IActionResult> Get([FromBody] int orderId)
+        public async Task<IActionResult> Get(int orderId)
         {
             var result = await _service.GetOrderDetail(orderId);
             return Ok(result);
