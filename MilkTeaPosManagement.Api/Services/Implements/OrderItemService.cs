@@ -96,10 +96,13 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             }
             if (existed != null)
             {
-                existed.Quantity++;             
-                existed.Price += product.Prize;
+                existed.Quantity+= request.Quantity;             
+                existed.Price += product.Prize * request.Quantity;
                 _uow.GetRepository<Orderitem>().UpdateAsync(existed);
-                return new MethodResult<Orderitem>.Success(existed);
+                if (await _uow.CommitAsync() > 0)
+                {
+                    return new MethodResult<Orderitem>.Success(existed);
+                }                
             }
             var items = await _uow.GetRepository<Orderitem>().GetListAsync();
             var itemId = items.Count > 0 ? items.Last().OrderItemId + 1 : 1;
@@ -119,7 +122,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             return new MethodResult<Orderitem>.Failure("Add to cart not success", StatusCodes.Status400BadRequest);
             
         }
-        public async Task<MethodResult<Orderitem>> RemoveFromCart(int productId)
+        public async Task<MethodResult<Orderitem>> RemoveFromCart(int productId, int quantity)
         {
             var existed = await _uow.GetRepository<Orderitem>().SingleOrDefaultAsync(
                 predicate: pm => pm.ProductId == productId && pm.OrderId == null);
@@ -132,12 +135,15 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 return new MethodResult<Orderitem>.Failure("Item not found!", StatusCodes.Status400BadRequest);
             }
-            if (existed.Quantity > 1)
+            if (existed.Quantity > quantity)
             {
-                existed.Quantity--;
-                existed.Price -= product.Prize;
+                existed.Quantity-= quantity;
+                existed.Price -= product.Prize * quantity;
                 _uow.GetRepository<Orderitem>().UpdateAsync(existed);
-                return new MethodResult<Orderitem>.Success(existed);
+                if (await _uow.CommitAsync() > 0)
+                {
+                    return new MethodResult<Orderitem>.Success(existed);
+                }
             }
             _uow.GetRepository<Orderitem>().DeleteAsync(existed);
             if (await _uow.CommitAsync() > 0)
