@@ -8,7 +8,6 @@ namespace MilkTeaPosManagement.Api.Controllers
 {
     [Route("api/order")]
     [ApiController]
-    [Authorize]
     public class OrderController(IOrderService service) : ControllerBase
     {
         private readonly IOrderService _service = service;
@@ -18,7 +17,7 @@ namespace MilkTeaPosManagement.Api.Controllers
             var result = await _service.GetAllOrders(searchModel);
             return Ok(result);
         }
-        [HttpGet("get-by-id")]
+        [HttpGet("get-by-id/{id}")]
         public async Task<IActionResult> Get([FromBody] int orderId)
         {
             var result = await _service.GetOrderDetail(orderId);
@@ -37,6 +36,15 @@ namespace MilkTeaPosManagement.Api.Controllers
         public async Task<IActionResult> Delete([FromBody] int orderId)
         {
             var result = await _service.CancelOrder(orderId);
+            return result.Match(
+                (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
+                Ok
+            );
+        }
+        [HttpPut]
+        public async Task<IActionResult> update([FromBody] int orderId)
+        {
+            var result = await _service.ConfirmOrder(orderId);
             return result.Match(
                 (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
                 Ok
