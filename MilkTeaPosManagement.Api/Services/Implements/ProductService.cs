@@ -384,8 +384,8 @@ namespace MilkTeaPosManagement.Api.Services.Implements
 
                 foreach (var master in masterProducts)
                 {
-                    master.Sizes = sizeProducts
-                        .Where(s => s.ProductId == master.ProductId)
+                    master.Variants = sizeProducts
+                        .Where(s => s.ParentId == master.ProductId)
                         .ToList();
                 }
             }
@@ -401,21 +401,49 @@ namespace MilkTeaPosManagement.Api.Services.Implements
 
                 foreach (var combo in comboProducts)
                 {
-                    // Get main items (not extras)
                     var mainItems = allComboItems
-                        .Where(c => c.ComboItemId == combo.ProductId && c.MasterId == null)
+                        .Where(c => c.Combod == combo.ProductId && c.MasterId == null)
                         .ToList();
 
                     foreach (var mainItem in mainItems)
                     {
-                        // Get extras for this item
                         mainItem.ExtraItems = allComboItems
-                            .Where(c => c.ComboItemId == combo.ProductId && c.MasterId == mainItem.ProductId)
+                            .Where(c => c.Combod == combo.ProductId && c.MasterId == mainItem.ProductId)
                             .ToList();
 
                         combo.ComboItems.Add(mainItem);
                     }
                 }
+            }
+        }
+        public async Task<MethodResult<ProductResponse>> GetProductByIdAsync(int id)
+        {
+            try
+            {
+                var product = await _uow.GetRepository<Product>().SingleOrDefaultAsync(
+                    predicate: p => p.ProductId == id,
+                    include: q => q.Include(p => p.Category)
+                );
+
+                if (product == null)
+                {
+                    return new MethodResult<ProductResponse>.Failure(
+                        "Product not found",
+                        StatusCodes.Status404NotFound
+                    );
+                }
+
+                var productResponse = _mapper.Map<ProductResponse>(product);
+                await EnrichProductDetails(new List<ProductResponse> { productResponse });
+
+                return new MethodResult<ProductResponse>.Success(productResponse);
+            }
+            catch (Exception ex)
+            {
+                return new MethodResult<ProductResponse>.Failure(
+                    $"Error retrieving product: {ex.Message}",
+                    StatusCodes.Status500InternalServerError
+                );
             }
         }
     }

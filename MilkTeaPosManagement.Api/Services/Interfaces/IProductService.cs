@@ -10,5 +10,6 @@ namespace MilkTeaPosManagement.Api.Services.Interfaces
         Task<MethodResult<Product>> CreateExtraProductAsync(int userId, CreateExtraProductRequest request);
         Task<MethodResult<Product>> CreateComboAsync(int userId, CreateComboRequest request);
         Task<MethodResult<PaginatedResponse<ProductResponse>>> GetFilteredProductsAsync(ProductFilterModel filter);
+        Task<MethodResult<ProductResponse>> GetProductByIdAsync(int id);
     }
 }

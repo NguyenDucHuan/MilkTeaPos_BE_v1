@@ -11,7 +11,7 @@ namespace MilkTeaPosManagement.Api.Mapper
             CreateMap<Product, ProductResponse>()
                 .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category.CategoryName))
                 .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Prize))
-                .ForMember(dest => dest.Sizes, opt => opt.Ignore())
+                .ForMember(dest => dest.Variants, opt => opt.Ignore())
                 .ForMember(dest => dest.ComboItems, opt => opt.Ignore());
 
             CreateMap<Comboltem, ComboItemResponse>()
