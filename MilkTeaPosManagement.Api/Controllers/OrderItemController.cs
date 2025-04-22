@@ -43,7 +43,7 @@ namespace MilkTeaPosManagement.Api.Controllers
              );
         }
         [HttpGet("get-by-id/{orderItemId}")]
-        public async Task<IActionResult> GetById(int orderItemId)
+        public async Task<IActionResult> GetById([FromRoute]int orderItemId)
         {
             var result = await _service.GetAnOrderItemByIdAsync(orderItemId);
             return Ok(result);

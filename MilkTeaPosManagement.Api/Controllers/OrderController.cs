@@ -17,8 +17,8 @@ namespace MilkTeaPosManagement.Api.Controllers
             var result = await _service.GetAllOrders(searchModel);
             return Ok(result);
         }
-        [HttpGet("get-by-id/{id}")]
-        public async Task<IActionResult> Get(int orderId)
+        [HttpGet("get-by-id/{orderId}")]
+        public async Task<IActionResult> Get([FromRoute]int orderId)
         {
             var result = await _service.GetOrderDetail(orderId);
             return Ok(result);
@@ -42,7 +42,7 @@ namespace MilkTeaPosManagement.Api.Controllers
             );
         }
         [HttpPut]
-        public async Task<IActionResult> update([FromBody] int orderId)
+        public async Task<IActionResult> Update([FromBody] int orderId)
         {
             var result = await _service.ConfirmOrder(orderId);
             return result.Match(
