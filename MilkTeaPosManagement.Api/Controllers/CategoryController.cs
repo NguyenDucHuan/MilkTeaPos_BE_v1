@@ -42,10 +42,10 @@ namespace MilkTeaPosManagement.Api.Controllers
             );
         }
 
-        [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
+        //[Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
         [HttpPost]
         [Route(Router.CategoryRoute.Create)]
-        public async Task<IActionResult> CreateCategory([FromBody] CreateCategoryRequest request)
+        public async Task<IActionResult> CreateCategory([FromForm] CreateCategoryRequest request)
         {
             var result = await _categoryService.CreateCategoryAsync(request);
 
@@ -58,7 +58,7 @@ namespace MilkTeaPosManagement.Api.Controllers
         [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
         [HttpPut]
         [Route(Router.CategoryRoute.Update)]
-        public async Task<IActionResult> UpdateCategory([FromRoute] int id, [FromBody] UpdateCategoryRequest request)
+        public async Task<IActionResult> UpdateCategory([FromRoute] int id, [FromForm] UpdateCategoryRequest request)
         {
             var result = await _categoryService.UpdateCategoryAsync(id, request);
 

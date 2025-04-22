@@ -23,6 +23,7 @@ namespace MilkTeaPosManagement.Api.Extensions
             service.AddHttpContextAccessor();
             service.AddTransient<ICloudinaryService, CloudinaryService>();
             service.AddTransient<ICategoryService, CategoryService>();
+            service.AddTransient<IProductService, ProductService>();
             return service;
         }
     }

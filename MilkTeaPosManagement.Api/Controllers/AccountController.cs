@@ -11,12 +11,12 @@ using MilkTeaPosManagement.Api.Models.AccountModel;
 
 namespace MilkTeaPosManagement.Api.Controllers
 {
-    public class AcountController : ControllerBase
+    public class AccountController : ControllerBase
     {
         private readonly IAccountService _accountService;
 
 
-        public AcountController(IAccountService userService)
+        public AccountController(IAccountService userService)
         {
             _accountService = userService;
         }

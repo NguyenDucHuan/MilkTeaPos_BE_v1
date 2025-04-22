@@ -106,8 +106,8 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 }
                 return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
             }
+
             return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
-            
         }
         public async Task<MethodResult<Order>> CancelOrder(int orderId)
         {

@@ -42,7 +42,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             return await _uow.GetRepository<Category>().GetPagingListAsync(
                 selector: category => _mapper.Map<CategoryViewModel>(category),
                 predicate: predicate,
-                orderBy: query => query.ApplySorting(filter.SortBy, filter.SortAscending),
+                orderBy: query => query.ApplyCategorySorting(filter.SortBy, filter.SortAscending),
                 page: filter.Page,
                 size: filter.PageSize
             );
