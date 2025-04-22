@@ -60,7 +60,7 @@ namespace MilkTeaPosManagement.Api.Controllers
             );
         }
 
-        //[Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
+        [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
         [HttpGet]
         [Route(Router.UserRoute.GetAllUsers)]
         public async Task<IActionResult> GetAllUsers([FromQuery] AccountFilterModel filter = null)
@@ -74,7 +74,7 @@ namespace MilkTeaPosManagement.Api.Controllers
             return Ok(users);
         }
 
-        //[Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
+        [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
         [HttpGet]
         [Route(Router.UserRoute.GetUserById)]
         public async Task<IActionResult> GetUserById([FromRoute] int id)
@@ -87,7 +87,7 @@ namespace MilkTeaPosManagement.Api.Controllers
             );
         }
 
-        //[Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
+        [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
         [HttpPost]
         [Route(Router.UserRoute.CreateUser)]
         public async Task<IActionResult> CreateUser([FromForm] CreateUserRequest request, IFormFile avatarFile)
@@ -100,7 +100,7 @@ namespace MilkTeaPosManagement.Api.Controllers
             );
         }
 
-        //[Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
+        [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
         [HttpPut]
         [Route(Router.UserRoute.UpdateUser)]
         public async Task<IActionResult> UpdateUser([FromRoute] int id, [FromForm] UpdateUserRequest request, IFormFile avatarFile)

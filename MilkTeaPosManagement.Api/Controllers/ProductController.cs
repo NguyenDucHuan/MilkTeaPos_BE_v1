@@ -117,5 +117,116 @@ namespace MilkTeaPosManagement.Api.Controllers
                 })
             );
         }
+        [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
+        [HttpPut]
+        [Route(Router.ProductRoute.UpdateMaster)]
+        public async Task<IActionResult> UpdateMasterProduct([FromForm] UpdateMasterProductRequest request)
+        {
+            var userIdString = User.FindFirst(ClaimTypes.Sid)?.Value;
+            if (!int.TryParse(userIdString, out var userId))
+            {
+                return BadRequest("Invalid user ID.");
+            }
+
+            var result = await _productService.UpdateMasterProductAsync(userId, request);
+
+            return result.Match(
+                (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
+                product => Ok(new
+                {
+                    message = "Master product updated successfully",
+                    data = product
+                })
+            );
+        }
+
+        [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
+        [HttpPut]
+        [Route(Router.ProductRoute.UpdateSize)]
+        public async Task<IActionResult> UpdateSizeProduct([FromBody] UpdateSizeProductRequest request)
+        {
+            var userIdString = User.FindFirst(ClaimTypes.Sid)?.Value;
+            if (!int.TryParse(userIdString, out var userId))
+            {
+                return BadRequest("Invalid user ID.");
+            }
+
+            var result = await _productService.UpdateSizeProductAsync(userId, request);
+
+            return result.Match(
+                (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
+                product => Ok(new
+                {
+                    message = "Size product updated successfully",
+                    data = product
+                })
+            );
+        }
+
+        [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
+        [HttpPut]
+        [Route(Router.ProductRoute.UpdateExtra)]
+        public async Task<IActionResult> UpdateExtraProduct([FromForm] UpdateExtraProductRequest request)
+        {
+            var userIdString = User.FindFirst(ClaimTypes.Sid)?.Value;
+            if (!int.TryParse(userIdString, out var userId))
+            {
+                return BadRequest("Invalid user ID.");
+            }
+
+            var result = await _productService.UpdateExtraProductAsync(userId, request);
+
+            return result.Match(
+                (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
+                product => Ok(new
+                {
+                    message = "Extra product updated successfully",
+                    data = product
+                })
+            );
+        }
+
+        [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
+        [HttpPut]
+        [Route(Router.ProductRoute.UpdateCombo)]
+        public async Task<IActionResult> UpdateComboProduct([FromForm] UpdateComboProductRequest request)
+        {
+            var userIdString = User.FindFirst(ClaimTypes.Sid)?.Value;
+            if (!int.TryParse(userIdString, out var userId))
+            {
+                return BadRequest("Invalid user ID.");
+            }
+
+            var result = await _productService.UpdateComboProductAsync(userId, request);
+
+            return result.Match(
+                (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
+                product => Ok(new
+                {
+                    message = "Combo product updated successfully",
+                    data = product
+                })
+            );
+        }
+        [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
+        [HttpPut]
+        [Route(Router.ProductRoute.Delete)]
+        public async Task<IActionResult> UpdateProductStatus(int id)
+        {
+            var userIdString = User.FindFirst(ClaimTypes.Sid)?.Value;
+            if (!int.TryParse(userIdString, out var userId))
+            {
+                return BadRequest("Invalid user ID.");
+            }
+            var result = await _productService.UpdateProductStatusAsync(userId, id);
+            return result.Match(
+                (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
+                product => Ok(new
+                {
+                    message = "Product status updated successfully",
+                    data = product
+                })
+            );
+        }
     }
 }

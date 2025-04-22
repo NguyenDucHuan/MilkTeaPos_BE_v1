@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using MilkTeaPosManagement.Api.Extensions.Filter;
 using AutoMapper;
 using System.Linq;
+using System;
 
 namespace MilkTeaPosManagement.Api.Services.Implements
 {
@@ -58,9 +59,9 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     CategoryId = parentRequest.CategoryId,
                     Description = parentRequest.Description,
                     ImageUrl = parentImageUrl,
-                    Prize = null, // MatterProduct has no price
+                    Prize = null,
                     ProductType = ProductConstant.PRODUCT_TYPE_MATTER_PRODUCT,
-                    ParentId = null, // MatterProduct has no parent
+                    ParentId = null,
                     SizeId = ProductConstant.PRODUCT_SIZE_PARENT,
                     CreateAt = DateTime.Now,
                     CreateBy = userId,
@@ -72,7 +73,6 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 await _uow.GetRepository<Product>().InsertAsync(parentProduct);
                 await _uow.CommitAsync();
 
-                // Get the newly created parent product ID
                 var createdParentProduct = await _uow.GetRepository<Product>().SingleOrDefaultAsync(
                     predicate: p => p.ProductName == parentRequest.ProductName &&
                                    p.ProductType == ProductConstant.PRODUCT_TYPE_MATTER_PRODUCT &&
@@ -102,7 +102,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         {
                             await _uow.RollbackTransactionAsync();
                             return new MethodResult<List<Product>>.Failure(
-                                $"Failed to upload image for size {sizeRequest.Size}",
+                                $"Failed to upload image for variant {sizeRequest.Size}",
                                 StatusCodes.Status500InternalServerError
                             );
                         }
@@ -442,6 +442,410 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 return new MethodResult<ProductResponse>.Failure(
                     $"Error retrieving product: {ex.Message}",
+                    StatusCodes.Status500InternalServerError
+                );
+            }
+        }
+        public async Task<MethodResult<ProductResponse>> UpdateMasterProductAsync(int userId, UpdateMasterProductRequest request)
+        {
+            try
+            {
+                var product = await _uow.GetRepository<Product>().SingleOrDefaultAsync(
+                    predicate: p => p.ProductId == request.ProductId && p.ParentId == null && p.ProductType != "Combo" && p.ProductType != "Extra",
+                    include: q => q.Include(p => p.Category)
+                );
+
+                if (product == null)
+                {
+                    return new MethodResult<ProductResponse>.Failure(
+                        "Master product not found",
+                        StatusCodes.Status404NotFound
+                    );
+                }
+                await _uow.BeginTransactionAsync();
+
+                if (request.CategoryId.HasValue && request.CategoryId != product.CategoryId)
+                {
+                    var category = await _uow.GetRepository<Category>().SingleOrDefaultAsync(
+                        predicate: c => c.CategoryId == request.CategoryId
+                    );
+                    if (category == null)
+                    {
+                        return new MethodResult<ProductResponse>.Failure(
+                            "Category not found",
+                            StatusCodes.Status404NotFound
+                        );
+                    }
+                    product.CategoryId = request.CategoryId;
+                }
+                if (!string.IsNullOrEmpty(request.ProductName))
+                {
+                    product.ProductName = request.ProductName;
+                }
+
+                if (!string.IsNullOrEmpty(request.Description))
+                {
+                    product.Description = request.Description;
+                }
+                if (request.Status.HasValue)
+                {
+                    product.Status = request.Status;
+                }
+
+                if (request.Image != null)
+                {
+                    var imageUrl = await _cloudinaryService.UploadImageAsync(request.Image);
+
+                    if (string.IsNullOrEmpty(imageUrl))
+                    {
+                        return new MethodResult<ProductResponse>.Failure(
+                            "Failed to upload product image",
+                            StatusCodes.Status500InternalServerError
+                        );
+                    }
+
+                    product.ImageUrl = imageUrl;
+                }
+                product.UpdateAt = DateTime.UtcNow;
+                product.UpdateBy = userId;
+
+                _uow.GetRepository<Product>().UpdateAsync(product);
+                await _uow.CommitAsync();
+
+                if (request.Variants != null && request.Variants.Any())
+                {
+                    foreach (var variant in request.Variants)
+                    {
+                        var sizeProduct = await _uow.GetRepository<Product>().SingleOrDefaultAsync(
+                            predicate: p => p.ProductId == variant.ProductId && p.ParentId == product.ProductId
+                        );
+
+
+                        if (sizeProduct != null)
+                        {
+                            if (variant.Image != null)
+                            {
+                                var imageUrl = await _cloudinaryService.UploadImageAsync(variant.Image);
+                                if (string.IsNullOrEmpty(imageUrl))
+                                {
+                                    return new MethodResult<ProductResponse>.Failure(
+                                        "Failed to upload product image",
+                                        StatusCodes.Status500InternalServerError
+                                    );
+                                }
+                                sizeProduct.ImageUrl = imageUrl;
+                            }
+                            if (variant.Prize.HasValue)
+                                sizeProduct.Prize = variant.Prize;
+
+                            if (!string.IsNullOrEmpty(variant.SizeId))
+                                sizeProduct.SizeId = variant.SizeId;
+
+                            if (variant.Status.HasValue)
+                                sizeProduct.Status = variant.Status;
+
+                            sizeProduct.UpdateAt = DateTime.UtcNow;
+                            sizeProduct.UpdateBy = userId;
+
+                            _uow.GetRepository<Product>().UpdateAsync(sizeProduct);
+                            await _uow.CommitAsync();
+                        }
+                    }
+                }
+
+                await _uow.CommitAsync();
+                var productResponse = _mapper.Map<ProductResponse>(product);
+                await EnrichProductDetails(new List<ProductResponse> { productResponse });
+
+                await _uow.CommitTransactionAsync();
+                return new MethodResult<ProductResponse>.Success(productResponse);
+            }
+            catch (Exception ex)
+            {
+                await _uow.RollbackTransactionAsync();
+                return new MethodResult<ProductResponse>.Failure(
+                    $"Error updating master product: {ex.Message}",
+                    StatusCodes.Status500InternalServerError
+                );
+            }
+        }
+
+        public async Task<MethodResult<ProductResponse>> UpdateSizeProductAsync(int userId, UpdateSizeProductRequest request)
+        {
+            try
+            {
+                var product = await _uow.GetRepository<Product>().SingleOrDefaultAsync(
+                    predicate: p => p.ProductId == request.ProductId && p.ParentId != null,
+                    include: q => q.Include(p => p.Category)
+                );
+                if (product == null)
+                {
+                    return new MethodResult<ProductResponse>.Failure(
+                        "Size product not found",
+                        StatusCodes.Status404NotFound
+                    );
+                }
+                if (request.Image != null)
+                {
+                    var imageUrl = await _cloudinaryService.UploadImageAsync(request.Image);
+                    if (string.IsNullOrEmpty(imageUrl))
+                    {
+                        return new MethodResult<ProductResponse>.Failure(
+                            "Failed to upload product image",
+                            StatusCodes.Status500InternalServerError
+                        );
+                    }
+                    product.ImageUrl = imageUrl;
+                }
+
+                if (request.Prize.HasValue)
+                    product.Prize = request.Prize;
+
+                if (!string.IsNullOrEmpty(request.SizeId))
+                    product.SizeId = request.SizeId;
+
+                if (request.Status.HasValue)
+                    product.Status = request.Status;
+
+                product.UpdateAt = DateTime.UtcNow;
+                product.UpdateBy = userId;
+
+                _uow.GetRepository<Product>().UpdateAsync(product);
+                await _uow.CommitAsync();
+
+                var productResponse = _mapper.Map<ProductResponse>(product);
+                await EnrichProductDetails(new List<ProductResponse> { productResponse });
+
+                return new MethodResult<ProductResponse>.Success(productResponse);
+            }
+            catch (Exception ex)
+            {
+                return new MethodResult<ProductResponse>.Failure(
+                    $"Error updating variant product: {ex.Message}",
+                    StatusCodes.Status500InternalServerError
+                );
+            }
+        }
+
+        public async Task<MethodResult<ProductResponse>> UpdateExtraProductAsync(int userId, UpdateExtraProductRequest request)
+        {
+            try
+            {
+                var product = await _uow.GetRepository<Product>().SingleOrDefaultAsync(
+                    predicate: p => p.ProductId == request.ProductId && p.ProductType == "Extra",
+                    include: q => q.Include(p => p.Category)
+                );
+                if (product == null)
+                {
+                    return new MethodResult<ProductResponse>.Failure(
+                        "Extra product not found",
+                        StatusCodes.Status404NotFound
+                    );
+                }
+                if (request.CategoryId.HasValue && request.CategoryId != product.CategoryId)
+                {
+                    var category = await _uow.GetRepository<Category>().SingleOrDefaultAsync(
+                       predicate: c => c.CategoryId == request.CategoryId
+                    );
+                    if (category == null)
+                    {
+                        return new MethodResult<ProductResponse>.Failure(
+                            "Category not found",
+                            StatusCodes.Status404NotFound
+                        );
+                    }
+
+                    product.CategoryId = request.CategoryId;
+                }
+                if (request.Image != null)
+                {
+                    var imageUrl = await _cloudinaryService.UploadImageAsync(request.Image);
+
+                    if (string.IsNullOrEmpty(imageUrl))
+                    {
+                        return new MethodResult<ProductResponse>.Failure(
+                            "Failed to upload product image",
+                            StatusCodes.Status500InternalServerError
+                        );
+                    }
+
+                    product.ImageUrl = imageUrl;
+                }
+                if (!string.IsNullOrEmpty(request.ProductName))
+                    product.ProductName = request.ProductName;
+
+                if (!string.IsNullOrEmpty(request.Description))
+                    product.Description = request.Description;
+
+                if (request.Prize.HasValue)
+                    product.Prize = request.Prize;
+
+                if (request.Status.HasValue)
+                    product.Status = request.Status;
+
+
+                product.UpdateAt = DateTime.UtcNow;
+                product.UpdateBy = userId;
+                _uow.GetRepository<Product>().UpdateAsync(product);
+                await _uow.CommitAsync();
+                var productResponse = _mapper.Map<ProductResponse>(product);
+                await EnrichProductDetails(new List<ProductResponse> { productResponse });
+
+                return new MethodResult<ProductResponse>.Success(productResponse);
+            }
+            catch (Exception ex)
+            {
+                return new MethodResult<ProductResponse>.Failure(
+                    $"Error updating extra product: {ex.Message}",
+                    StatusCodes.Status500InternalServerError
+                );
+            }
+        }
+
+        public async Task<MethodResult<ProductResponse>> UpdateComboProductAsync(int userId, UpdateComboProductRequest request)
+        {
+            try
+            {
+                var product = await _uow.GetRepository<Product>().SingleOrDefaultAsync(
+                    predicate: p => p.ProductId == request.ProductId && p.ProductType == "Combo",
+                    include: q => q.Include(p => p.Category).Include(p => p.Comboltems)
+                );
+
+                if (product == null)
+                {
+                    return new MethodResult<ProductResponse>.Failure(
+                        "Combo product not found",
+                        StatusCodes.Status404NotFound
+                    );
+                }
+                if (request.CategoryId.HasValue && request.CategoryId != product.CategoryId)
+                {
+                    var category = await _uow.GetRepository<Category>().SingleOrDefaultAsync(
+                       predicate: c => c.CategoryId == request.CategoryId
+                    );
+
+                    if (category == null)
+                    {
+                        return new MethodResult<ProductResponse>.Failure(
+                            "Category not found",
+                            StatusCodes.Status404NotFound
+                        );
+                    }
+
+                    product.CategoryId = request.CategoryId;
+                }
+                if (request.Image != null)
+                {
+                    var imageUrl = await _cloudinaryService.UploadImageAsync(request.Image);
+
+                    if (string.IsNullOrEmpty(imageUrl))
+                    {
+                        return new MethodResult<ProductResponse>.Failure(
+                            "Failed to upload product image",
+                            StatusCodes.Status500InternalServerError
+                        );
+                    }
+
+                    product.ImageUrl = imageUrl;
+                }
+                if (!string.IsNullOrEmpty(request.ProductName))
+                    product.ProductName = request.ProductName;
+
+                if (!string.IsNullOrEmpty(request.Description))
+                    product.Description = request.Description;
+
+                if (request.Prize.HasValue)
+                    product.Prize = request.Prize;
+
+                if (request.Status.HasValue)
+                    product.Status = request.Status;
+
+                if (request.ComboItems != null && request.ComboItems.Any())
+                {
+                    foreach (var item in product.Comboltems.ToList())
+                    {
+                        _uow.GetRepository<Comboltem>().DeleteAsync(item);
+                    }
+                    foreach (var comboItem in request.ComboItems)
+                    {
+                        var productExists = await _uow.GetRepository<Product>().SingleOrDefaultAsync(predicate: p => p.ProductId == comboItem.ProductId);
+                        if (productExists == null)
+                        {
+                            return new MethodResult<ProductResponse>.Failure(
+                                $"Product with ID {comboItem.ProductId} not found for combo item",
+                                StatusCodes.Status404NotFound
+                            );
+                        }
+
+                        var newComboItem = new Comboltem
+                        {
+                            Combod = product.ProductId,
+                            ProductId = comboItem.ProductId,
+                            Quantity = comboItem.Quantity,
+                            Discount = comboItem.Discount
+                        };
+
+                        await _uow.GetRepository<Comboltem>().InsertAsync(newComboItem);
+                    }
+                }
+                product.UpdateAt = DateTime.UtcNow;
+                product.UpdateBy = userId;
+
+                _uow.GetRepository<Product>().UpdateAsync(product);
+                await _uow.CommitAsync();
+                var productResponse = _mapper.Map<ProductResponse>(product);
+                await EnrichProductDetails(new List<ProductResponse> { productResponse });
+
+                return new MethodResult<ProductResponse>.Success(productResponse);
+            }
+            catch (Exception ex)
+            {
+                return new MethodResult<ProductResponse>.Failure(
+                    $"Error updating combo product: {ex.Message}",
+                    StatusCodes.Status500InternalServerError
+                );
+            }
+        }
+        public async Task<MethodResult<bool>> UpdateProductStatusAsync(int userId, int productId)
+        {
+            try
+            {
+                var product = await _uow.GetRepository<Product>().SingleOrDefaultAsync(
+                    predicate: p => p.ProductId == productId
+                );
+                if (product == null)
+                {
+                    return new MethodResult<bool>.Failure(
+                        "Product not found",
+                        StatusCodes.Status404NotFound
+                    );
+                }
+                await _uow.BeginTransactionAsync();
+                product.DisableAt = DateTime.UtcNow;
+                product.DisableBy = userId;
+                product.Status = product.Status == true ? false : true;
+                if (product.ProductType == ProductConstant.PRODUCT_TYPE_MATTER_PRODUCT)
+                {
+                    var sizeProducts = await _uow.GetRepository<Product>().GetListAsync(
+                        predicate: p => p.ParentId == product.ProductId
+                    );
+                    foreach (var sizeProduct in sizeProducts)
+                    {
+                        sizeProduct.Status = product.Status;
+                        sizeProduct.DisableAt = DateTime.UtcNow;
+                        sizeProduct.DisableBy = userId;
+                        _uow.GetRepository<Product>().UpdateAsync(sizeProduct);
+                    }
+                }
+                _uow.GetRepository<Product>().UpdateAsync(product);
+                await _uow.CommitAsync();
+                return new MethodResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                await _uow.RollbackTransactionAsync();
+                return new MethodResult<bool>.Failure(
+                    $"Error deleting product: {ex.Message}",
                     StatusCodes.Status500InternalServerError
                 );
             }
