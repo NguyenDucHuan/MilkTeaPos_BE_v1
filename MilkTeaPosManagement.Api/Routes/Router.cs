@@ -37,8 +37,12 @@
             public const string Create_Mater_Producr = $"{GetAll}/create-product";
             public const string Create_Extra_Product = $"{GetAll}/create-extra-product";
             public const string Create_Combo = $"{GetAll}/create-combo-product";
-            public const string Update = $"{GetAll}/update-product/{Id}";
+            public const string UpdateMaster = $"{GetAll}/update-product/{Id}";
+            public const string UpdateSize = $"{GetAll}/update-size/{Id}";
+            public const string UpdateExtra = $"{GetAll}/update-extra/{Id}";
+            public const string UpdateCombo = $"{GetAll}/update-combo/{Id}";
             public const string Delete = $"{GetAll}/update-status/{Id}";
+
         }
     }
 }
