@@ -11,17 +11,17 @@
         public decimal? Price { get; set; }
         public string? ProductType { get; set; }
         public string? SizeId { get; set; }
+        public int? ParentId { get; set; }
         public bool? Status { get; set; }
         public DateTime? CreateAt { get; set; }
-
-        // Thông tin bổ sung
-        public List<ProductResponse> Sizes { get; set; } = new List<ProductResponse>();
+        public List<ProductResponse> Variants { get; set; } = new List<ProductResponse>();
         public List<ComboItemResponse> ComboItems { get; set; } = new List<ComboItemResponse>();
     }
 
     public class ComboItemResponse
     {
         public int ComboItemId { get; set; }
+        public int? Combod { get; set; }
         public int ProductId { get; set; }
         public string ProductName { get; set; } = string.Empty;
         public string? ImageUrl { get; set; }

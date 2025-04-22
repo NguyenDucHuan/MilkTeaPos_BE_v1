@@ -102,5 +102,20 @@ namespace MilkTeaPosManagement.Api.Controllers
                 })
             );
         }
+        [Authorize]
+        [HttpGet]
+        [Route(Router.ProductRoute.GetById)]
+        public async Task<IActionResult> GetProductById(int id)
+        {
+            var result = await _productService.GetProductByIdAsync(id);
+            return result.Match(
+                (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
+                product => Ok(new
+                {
+                    message = "Product retrieved successfully",
+                    data = product
+                })
+            );
+        }
     }
 }
