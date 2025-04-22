@@ -11,6 +11,6 @@ namespace MilkTeaPosManagement.Api.Services.Interfaces
         Task<ICollection<Orderitem>> GetOrderitemsByOrderIdAsync(int orderId);
         Task<Orderitem> GetAnOrderItemByIdAsync(int id);
         Task<MethodResult<Orderitem>> AddToCart(OrderItemRequest request);
-        Task<MethodResult<Orderitem>> RemoveFromCart(int productId);
+        Task<MethodResult<Orderitem>> RemoveFromCart(int productId, int quantity);
     }
 }

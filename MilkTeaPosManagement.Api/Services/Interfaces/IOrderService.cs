@@ -11,5 +11,6 @@ namespace MilkTeaPosManagement.Api.Services.Interfaces
         Task<MethodResult<Order>> GetOrderDetail(int orderId);
         Task<MethodResult<Order>> CreateOrder(OrderRequest orderRequest);
         Task<MethodResult<Order>> CancelOrder(int orderId);
+        Task<MethodResult<Order>> ConfirmOrder(int orderId);
     }
 }
