@@ -14,12 +14,18 @@ namespace MilkTeaPosManagement.Api.Controllers
         [HttpGet("get-cart")]
         public async Task<IActionResult> GetCart()
         {
-            var result = await _service.GetCartAsync();
-            return Ok(new
+            try
             {
-                cart = result.Item1,
-                offer = result.Item2
-            });
+                var result = await _service.GetCartAsync();
+                return Ok(new
+                {
+                    cart = result.Item1,
+                    offers = result.Item2
+                });
+            } catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
         [HttpGet("get-by-order-id/{orderId}")]
         public async Task<IActionResult> GetByOrderId([FromRoute] int orderId)
@@ -37,7 +43,7 @@ namespace MilkTeaPosManagement.Api.Controllers
              );
         }
         [HttpGet("get-by-id/{orderItemId}")]
-        public async Task<IActionResult> GetById([FromBody] int orderItemId)
+        public async Task<IActionResult> GetById(int orderItemId)
         {
             var result = await _service.GetAnOrderItemByIdAsync(orderItemId);
             return Ok(result);

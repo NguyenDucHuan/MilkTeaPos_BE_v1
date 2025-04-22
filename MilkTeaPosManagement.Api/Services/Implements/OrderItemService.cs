@@ -19,31 +19,35 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             return (cart, offers);
         }
 
-        public List<Product> GetOffers(ICollection<Orderitem> cart, ICollection<Product> combos)
+        public List<Product>? GetOffers(ICollection<Orderitem> cart, ICollection<Product> combos)
         {
             var offers = new List<Product>();
             var cartProductIds = new List<int?>();
-            foreach (var product in cart)
+            if (cart != null && combos !=null && cart.Count > 0 && combos.Count > 0)
             {
-                cartProductIds.Add(product.ProductId);
-            }
-            foreach (var combo in combos)
-            {
-                bool suitable = true;
-                foreach (var comboItem in combo.Comboltems)
+                foreach (var product in cart)
                 {
-                    if (!cartProductIds.Contains(comboItem.ProductId))
+                    cartProductIds.Add(product.ProductId);
+                }
+                foreach (var combo in combos)
+                {
+                    bool suitable = true;
+                    foreach (var comboItem in combo.Comboltems)
                     {
-                        suitable = false;
-                        break;
+                        if (!cartProductIds.Contains(comboItem.ProductId))
+                        {
+                            suitable = false;
+                            break;
+                        }
+                    }
+                    if (suitable)
+                    {
+                        offers.Add(combo);
                     }
                 }
-                if (suitable)
-                {
-                    offers.Add(combo);
-                }
+                return offers;
             }
-            return offers;
+            return null;
         }
         public async Task<MethodResult<Orderitem>> ChangeProductsToCombo(int comboId)
         {
