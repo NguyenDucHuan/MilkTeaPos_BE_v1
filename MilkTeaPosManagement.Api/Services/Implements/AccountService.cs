@@ -122,7 +122,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             return await _uow.GetRepository<Account>().GetPagingListAsync(
                 selector: user => _mapper.Map<AccountViewModel>(user),
                 predicate: predicate,
-                orderBy: query => query.ApplySorting(filter.SortBy, filter.SortAscending),
+                orderBy: query => query.ApplyAccountSorting(filter.SortBy, filter.SortAscending),
                 page: filter.Page,
                 size: filter.PageSize
             );

@@ -4,7 +4,7 @@ namespace MilkTeaPosManagement.Api.Extensions.Filter
 {
     public static class CategoryFilterExtensions
     {
-        public static IOrderedQueryable<Category> ApplySorting(this IQueryable<Category> query, string sortBy, bool ascending)
+        public static IOrderedQueryable<Category> ApplyCategorySorting(this IQueryable<Category> query, string sortBy, bool ascending)
         {
             if (string.IsNullOrWhiteSpace(sortBy))
             {

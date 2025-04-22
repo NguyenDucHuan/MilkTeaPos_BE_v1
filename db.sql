@@ -107,7 +107,9 @@ INSERT INTO Categories (CategoryName, Description, Status)
 VALUES 
     ('Beverages', 'Drinks like tea, coffee, and milk tea', TRUE),
     ('Snacks', 'Light snacks like chips and cookies', TRUE),
-    ('Desserts', 'Sweet treats like cakes and ice creams', TRUE);
+    ('Desserts', 'Sweet treats like cakes and ice creams', TRUE),
+    ('Topping', 'More wonderful thing  ', TRUE),
+    ('Combo', 'Save your Money', TRUE);
 
 -- Insert sample data into Accounts Table with FullName
 INSERT INTO Accounts (Username, FullName, Password_hash, Email, ImageUrl, Phone, Role, Created_at, Updated_at, Status)

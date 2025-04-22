@@ -87,7 +87,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 var setOrder = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == order.OrderId, include: o => o.Include(od => od.Orderstatusupdates));
                 return new MethodResult<Order>.Success(setOrder);
             }
-            return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
+            return new MethodResult<Order>.Failure("Create_Mater_Producr order not success!", StatusCodes.Status400BadRequest);
 
         }
         public async Task<MethodResult<Order>> CancelOrder(int orderId)
