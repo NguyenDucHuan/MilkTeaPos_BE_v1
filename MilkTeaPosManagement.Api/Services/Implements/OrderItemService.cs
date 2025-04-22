@@ -14,7 +14,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
         public async Task<(ICollection<Orderitem>, List<Product>?)> GetCartAsync()
         {
             var cart = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.OrderId == null, include: oi => oi.Include(i => i.Product));
-            var combos = await _uow.GetRepository<Product>().GetListAsync(predicate: p => p.ProductType == "Combo" && p.ParentId == null, include: p => p.Include(c => c.Orderitems));
+            var combos = await _uow.GetRepository<Product>().GetListAsync(predicate: p => p.ProductType == "Combo" && p.ParentId == null, include: p => p.Include(c => c.Comboltems));
             var offers = GetOffers(cart, combos);
             return (cart, offers);
         }
@@ -114,7 +114,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 OrderItemId = itemId,
                 Quantity = request.Quantity,
-                Price = product.Prize,
+                Price = product.Prize * request.Quantity,
                 MasterId = request.MasterId,
                 ProductId = request.ProductId,
             };
@@ -139,10 +139,10 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 return new MethodResult<Orderitem>.Failure("Item not found!", StatusCodes.Status400BadRequest);
             }
-            if (existed.Quantity > quantity)
+            if (quantity > 0)
             {
-                existed.Quantity-= quantity;
-                existed.Price -= product.Prize * quantity;
+                existed.Quantity = quantity;
+                existed.Price = product.Prize * quantity;
                 _uow.GetRepository<Orderitem>().UpdateAsync(existed);
                 if (await _uow.CommitAsync() > 0)
                 {
@@ -154,7 +154,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 return new MethodResult<Orderitem>.Success(existed);
             }
-            return new MethodResult<Orderitem>.Failure("Remove from cart not success!", StatusCodes.Status400BadRequest);
+            return new MethodResult<Orderitem>.Failure("Cannot update quantity!", StatusCodes.Status400BadRequest);
             
         }
     }

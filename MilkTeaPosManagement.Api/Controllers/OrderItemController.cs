@@ -57,7 +57,7 @@ namespace MilkTeaPosManagement.Api.Controllers
                 Ok
             );
         }        
-        [HttpDelete("remove-from-cart")]
+        [HttpPut("update-product-quantity-in-cart")]
         public async Task<IActionResult> Delete(int productId, int quantity)
         {
             var result = await _service.RemoveFromCart(productId, quantity);

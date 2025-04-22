@@ -101,7 +101,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 await _uow.GetRepository<Orderstatusupdate>().InsertAsync(orderStatus);
                 if (await _uow.CommitAsync() > 0)
                 {
-                    var setOrder = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == order.OrderId, include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff));
+                    var setOrder = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == order.OrderId, include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff).Include(od => od.PaymentMethod));
                     return new MethodResult<Order>.Success(setOrder);
                 }
                 return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
