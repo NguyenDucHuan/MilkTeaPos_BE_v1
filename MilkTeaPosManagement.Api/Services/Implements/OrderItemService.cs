@@ -140,7 +140,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 return new MethodResult<Orderitem>.Failure("Item not found!", StatusCodes.Status400BadRequest);
             }
             existed.Quantity += quantity;
-            if (existed.Quantity <= 0 || quantity == 0)
+            if (existed.Quantity == 0 || quantity == 0)
             {
                 _uow.GetRepository<Orderitem>().DeleteAsync(existed);
             }
