@@ -56,8 +56,8 @@ namespace MilkTeaPosManagement.Api.Controllers
                 (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
                 Ok
             );
-        }        
-        [HttpPut("remove-from-cart")]
+        }
+        [HttpDelete("remove-from-cart")]
         public async Task<IActionResult> Delete(int productId, int quantity)
         {
             var result = await _service.RemoveFromCart(productId, quantity);
