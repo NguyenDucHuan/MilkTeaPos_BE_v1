@@ -127,14 +127,14 @@ VALUES
     ('Chocolate Chip Cookies', 2, 'Freshly baked chocolate chip cookies', 'https://example.com/images/cookies.jpg', 22.00, 'SingleProduct', 3,'Large', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
     ('Chocolate Chip Cookies', 2, 'Freshly baked chocolate chip cookies', 'https://example.com/images/cookies.jpg', 30.00, 'SingleProduct', 3,'Small', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
     ('Ice Cream Sundae', 3, 'A delicious chocolate and vanilla sundae', 'https://example.com/images/sundae.jpg', 4.50, 'MaterProduct', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
-    ('Ice Cream Sundae', 3, 'A delicious chocolate and vanilla sundae', 'https://example.com/images/sundae.jpg', 4.50, 'MaterProduct', 7, 'Large', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Ice Cream Sundae', 3, 'A delicious chocolate and vanilla sundae', 'https://example.com/images/sundae.jpg', 4.50, 'SingleProduct', 7, 'Large', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
     ('ComboIceSpice', 3, 'A delicious chocolate and vanilla sundae', 'https://example.com/images/sundae.jpg', 4.50, 'Combo', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE);
 
 -- Insert sample data into Comboltems Tablepassword
 INSERT INTO Comboltems (Combod, ProductID, Quantity, Discount, MasterID)
 VALUES
-    (1, 2, 1, 10, NULL),
-    (1, 5, 1 , 5, NULL);
+    (9, 2, 1, 10, NULL),
+    (9, 5, 1 , 5, NULL);
 
 -- Insert sample data into PaymentMethods Table
 INSERT INTO PaymentMethods (MethodName, Description, Status)
