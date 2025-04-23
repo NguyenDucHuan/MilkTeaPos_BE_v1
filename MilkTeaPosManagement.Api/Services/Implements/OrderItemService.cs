@@ -142,8 +142,8 @@ namespace MilkTeaPosManagement.Api.Services.Implements
 
             if (existed.Quantity > quantity)
             {
-                existed.Quantity += quantity;
-                existed.Price += product.Prize * quantity;
+                existed.Quantity -= quantity;
+                existed.Price -= product.Prize * quantity;
                 _uow.GetRepository<Orderitem>().UpdateAsync(existed);
                 if (await _uow.CommitAsync() > 0)
                 {
