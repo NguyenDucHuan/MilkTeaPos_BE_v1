@@ -11,6 +11,6 @@ namespace MilkTeaPosManagement.Api.Services.Interfaces
         Task<MethodResult<CategoryViewModel>> GetCategoryByIdAsync(int id);
         Task<MethodResult<CategoryViewModel>> CreateCategoryAsync(CreateCategoryRequest request);
         Task<MethodResult<CategoryViewModel>> UpdateCategoryAsync(int id, UpdateCategoryRequest request);
-        Task<MethodResult<bool>> DeleteCategoryAsync(int id);
+        Task<MethodResult<bool>> UpdateStatus(int id);
     }
 }

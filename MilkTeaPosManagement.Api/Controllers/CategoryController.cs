@@ -58,7 +58,7 @@ namespace MilkTeaPosManagement.Api.Controllers
         [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
         [HttpPut]
         [Route(Router.CategoryRoute.Update)]
-        public async Task<IActionResult> UpdateCategory( int id, [FromForm] UpdateCategoryRequest request)
+        public async Task<IActionResult> UpdateCategory(int id, [FromForm] UpdateCategoryRequest request)
         {
             var result = await _categoryService.UpdateCategoryAsync(id, request);
 
@@ -71,13 +71,13 @@ namespace MilkTeaPosManagement.Api.Controllers
         [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
         [HttpDelete]
         [Route(Router.CategoryRoute.Delete)]
-        public async Task<IActionResult> DeleteCategory([FromRoute] int id)
+        public async Task<IActionResult> UpdateStatusCategory(int id)
         {
-            var result = await _categoryService.DeleteCategoryAsync(id);
+            var result = await _categoryService.UpdateStatus(id);
 
             return result.Match(
                 (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
-                _ => Ok(new { message = "Category deleted successfully" })
+                _ => Ok(new { message = "Category Update Status successfully" })
             );
         }
     }
