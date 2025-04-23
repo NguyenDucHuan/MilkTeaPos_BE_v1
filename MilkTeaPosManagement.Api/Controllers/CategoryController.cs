@@ -42,7 +42,7 @@ namespace MilkTeaPosManagement.Api.Controllers
             );
         }
 
-        //[Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
+        [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
         [HttpPost]
         [Route(Router.CategoryRoute.Create)]
         public async Task<IActionResult> CreateCategory([FromForm] CreateCategoryRequest request)
