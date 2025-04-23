@@ -139,17 +139,18 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 return new MethodResult<Orderitem>.Failure("Item not found!", StatusCodes.Status400BadRequest);
             }
-            if (existed.Quantity > 1)
+            existed.Quantity += quantity;
+            if (existed.Quantity <= 0 || quantity == 0)
             {
-                existed.Quantity += quantity;
-                existed.Price += product.Prize * quantity;
-                _uow.GetRepository<Orderitem>().UpdateAsync(existed);
-                if (await _uow.CommitAsync() > 0)
-                {
-                    return new MethodResult<Orderitem>.Success(existed);
-                }
+                _uow.GetRepository<Orderitem>().DeleteAsync(existed);
             }
-            _uow.GetRepository<Orderitem>().DeleteAsync(existed);
+            existed.Price += product.Prize * quantity;
+            _uow.GetRepository<Orderitem>().UpdateAsync(existed);
+            if (await _uow.CommitAsync() > 0)
+            {
+                return new MethodResult<Orderitem>.Success(existed);
+            }
+            
             if (await _uow.CommitAsync() > 0)
             {
                 return new MethodResult<Orderitem>.Success(existed);
@@ -157,5 +158,19 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             return new MethodResult<Orderitem>.Failure("Cannot update quantity!", StatusCodes.Status400BadRequest);
             
         }
+        public async Task<MethodResult<object>> ClearCart()
+        {
+            var cart = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.OrderId == null);
+            foreach(var item in cart)
+            {
+                _uow.GetRepository<Orderitem>().DeleteAsync(item);
+            }
+            if (await _uow.CommitAsync() > 0)
+            {
+                return new MethodResult<object>.Success(cart);
+            }
+            return new MethodResult<object>.Failure("Cannot clear cart!", StatusCodes.Status400BadRequest);
+        }
+
     }
 }

@@ -66,5 +66,14 @@ namespace MilkTeaPosManagement.Api.Controllers
                 Ok
             );
         }
+        [HttpDelete("clear-cart")]
+        public async Task<IActionResult> Remove()
+        {
+            var result = await _service.ClearCart();
+            return result.Match(
+                (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
+                Ok
+            );
+        }
     }
 }
