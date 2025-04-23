@@ -139,17 +139,18 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 return new MethodResult<Orderitem>.Failure("Item not found!", StatusCodes.Status400BadRequest);
             }
-            existed.Quantity += quantity;
-            if (existed.Quantity == 0 || quantity == 0)
+
+            if (existed.Quantity > quantity)
             {
-                _uow.GetRepository<Orderitem>().DeleteAsync(existed);
+                existed.Quantity += quantity;
+                existed.Price += product.Prize * quantity;
+                _uow.GetRepository<Orderitem>().UpdateAsync(existed);
+                if (await _uow.CommitAsync() > 0)
+                {
+                    return new MethodResult<Orderitem>.Success(existed);
+                }
             }
-            existed.Price += product.Prize * quantity;
-            _uow.GetRepository<Orderitem>().UpdateAsync(existed);
-            if (await _uow.CommitAsync() > 0)
-            {
-                return new MethodResult<Orderitem>.Success(existed);
-            }
+            _uow.GetRepository<Orderitem>().DeleteAsync(existed);          
             
             if (await _uow.CommitAsync() > 0)
             {
