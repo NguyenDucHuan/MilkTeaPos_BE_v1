@@ -174,8 +174,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 if (request.Description != null)
                     category.Description = request.Description;
 
-                if (request.Status.HasValue)
-                    category.Status = request.Status.Value;
+
 
                 _uow.GetRepository<Category>().UpdateAsync(category);
 
@@ -199,7 +198,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             }
         }
 
-        public async Task<MethodResult<bool>> DeleteCategoryAsync(int id)
+        public async Task<MethodResult<bool>> UpdateStatus(int id)
         {
             try
             {
@@ -214,40 +213,38 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         StatusCodes.Status404NotFound
                     );
                 }
-                if (category.Status == false)
-                {
-                    category.Status = true;
-                }
-                else
-                {
-                    category.Status = false;
-                }
+                category.Status = !category.Status;
                 _uow.GetRepository<Category>().UpdateAsync(category);
 
-                if (category.Products.Any())
+                var products = await _uow.GetRepository<Product>().GetListAsync(
+                    predicate: p => p.CategoryId == id
+                );
+
+                if (products.Any())
                 {
-                    return new MethodResult<bool>.Failure(
-                        "Cannot delete category with associated products",
-                        StatusCodes.Status400BadRequest
-                    );
+                    foreach (var item in products)
+                    {
+                        if (item.Status.HasValue == true)
+                        {
+                            return new MethodResult<bool>.Failure("Cannot Update status category with associated products", StatusCodes.Status400BadRequest);
+                        }
+                    }
+
                 }
-
-                _uow.GetRepository<Category>().DeleteAsync(category);
-
                 if (await _uow.CommitAsync() > 0)
                 {
                     return new MethodResult<bool>.Success(true);
                 }
 
                 return new MethodResult<bool>.Failure(
-                    "Failed to delete category",
+                    "Failed to Update status category",
                     StatusCodes.Status500InternalServerError
                 );
             }
             catch (Exception ex)
             {
                 return new MethodResult<bool>.Failure(
-                    $"Error deleting category: {ex.Message}",
+                    $"Error Update status category: {ex.Message}",
                     StatusCodes.Status500InternalServerError
                 );
             }
