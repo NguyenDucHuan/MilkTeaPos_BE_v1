@@ -58,7 +58,7 @@ namespace MilkTeaPosManagement.Api.Controllers
         [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
         [HttpPut]
         [Route(Router.CategoryRoute.Update)]
-        public async Task<IActionResult> UpdateCategory([FromRoute] int id, [FromForm] UpdateCategoryRequest request)
+        public async Task<IActionResult> UpdateCategory( int id, [FromForm] UpdateCategoryRequest request)
         {
             var result = await _categoryService.UpdateCategoryAsync(id, request);
 
