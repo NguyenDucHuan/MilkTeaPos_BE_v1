@@ -108,6 +108,10 @@ VALUES
     ('Beverages', 'Drinks like tea, coffee, and milk tea', TRUE),
     ('Snacks', 'Light snacks like chips and cookies', TRUE),
     ('Desserts', 'Sweet treats like cakes and ice creams', TRUE),
+    ('Smoothies', 'Healthy smoothies made with fruits', TRUE),
+    ('Juices', 'Freshly pressed juices', TRUE),
+    ('Ice Cream', 'Cold and sweet ice creams', TRUE),
+    ('Coffee', 'Different varieties of coffee', TRUE),
     ('Topping', 'More wonderful thing  ', TRUE),
     ('Combo', 'Save your Money', TRUE);
 
@@ -120,21 +124,61 @@ VALUES
 
 INSERT INTO Products (ProductName, CategoryId, Description, ImageURL, Prize, ProductType, ParentID, SizeId, Create_at, Create_by, Update_at, Update_by, Disable_at, Disable_by, Status)
 VALUES 
-    ('Milk Tea', 1, 'Delicious milk tea with tapioca pearls', 'https://example.com/images/milk_tea.jpg', 1, 'MaterProduct', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
-    ('Milk Tea', 1, 'Delicious milk tea with tapioca pearls', 'https://example.com/images/milk_tea.jpg', 10000, 'SingleProduct', 1, 'Large', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
-    ('Bubble Tea', 1, 'Classic bubble tea with fruit flavors', 'https://example.com/images/bubble_tea.jpg', 6.50, 'MaterProduct', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
-    ('Chocolate Chip Cookies', 2, 'Freshly baked chocolate chip cookies', 'https://example.com/images/cookies.jpg', 0, 'MaterProduct', 3,'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
-    ('Chocolate Chip Cookies', 2, 'Freshly baked chocolate chip cookies', 'https://example.com/images/cookies.jpg', 22.00, 'SingleProduct', 3,'Large', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
-    ('Chocolate Chip Cookies', 2, 'Freshly baked chocolate chip cookies', 'https://example.com/images/cookies.jpg', 30.00, 'SingleProduct', 3,'Small', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
-    ('Ice Cream Sundae', 3, 'A delicious chocolate and vanilla sundae', 'https://example.com/images/sundae.jpg', 4.50, 'MaterProduct', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
-    ('Ice Cream Sundae', 3, 'A delicious chocolate and vanilla sundae', 'https://example.com/images/sundae.jpg', 4.50, 'SingleProduct', 7, 'Large', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
-    ('ComboIceSpice', 3, 'A delicious chocolate and vanilla sundae', 'https://example.com/images/sundae.jpg', 4.50, 'Combo', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE);
-
+	('Black Sugar Milk Tea', 1, 'Delicious milk tea with tapioca pearls', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745412959/bsgitc52q8tiisfwp3ly.jpg', 0, 'MaterProduct', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Green Tea', 1, 'Refreshing green tea with a touch of honey', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745414931/2_ce10a7f5-3695-4534-bfb6-0fec1761c129_lowvjy.webp', 0, 'MaterProduct', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Coffee', 7, 'Rich brewed coffee with a creamy finish', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415029/Coffe_wxej7m.jpg', 0, 'MaterProduct', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Smoothie', 6, 'Fresh fruit smoothies for a healthy treat', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415357/Smoothie_lebze0.jpg', 0, 'MaterProduct', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Tropical Juice', 7, 'Freshly pressed juices in various flavors', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415357/Tropical_Juice_ozyy64.jpg', 0, 'MaterProduct', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Ice Cream', 6, 'Delicious creamy ice cream', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415359/Ice_Cream_muvg62.jpg', 0, 'MaterProduct', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Cake', 3, 'Freshly baked cakes in various flavors', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415357/Cake_bcuts4.jpg', 0, 'MaterProduct', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Pastries', 3, 'Freshly baked pastries and bread', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415357/Pastries_u8lkgg.jpg', 0, 'MaterProduct', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+  
+    ('Black Sugar Milk Tea', 1, 'Delicious milk tea with tapioca pearls', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745412959/bsgitc52q8tiisfwp3ly.jpg', 30.00, 'SingleProduct', 1, 'Small', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Black Sugar Milk Tea', 1, 'Delicious milk tea with tapioca pearls', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745412959/bsgitc52q8tiisfwp3ly.jpg', 35.00, 'SingleProduct', 1, 'Medium', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Black Sugar Milk Tea', 1, 'Delicious milk tea with tapioca pearls', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745412959/bsgitc52q8tiisfwp3ly.jpg', 40.00, 'SingleProduct', 1, 'Large', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+	
+    ('Green Tea', 1, 'Refreshing green tea with a touch of honey', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745414931/2_ce10a7f5-3695-4534-bfb6-0fec1761c129_lowvjy.webp', 25.00, 'SingleProduct', 2, 'Small', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Green Tea', 1, 'Refreshing green tea with a touch of honey', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745414931/2_ce10a7f5-3695-4534-bfb6-0fec1761c129_lowvjy.webp', 28.00, 'SingleProduct', 2, 'Medium', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Green Tea', 1, 'Refreshing green tea with a touch of honey', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745414931/2_ce10a7f5-3695-4534-bfb6-0fec1761c129_lowvjy.webp', 32.00, 'SingleProduct', 2, 'Large', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+	
+    ('Coffee', 7, 'Rich brewed coffee with a creamy finish', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415029/Coffe_wxej7m.jpg', 35.00, 'SingleProduct', 3, 'Small', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Coffee', 7, 'Rich brewed coffee with a creamy finish', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415029/Coffe_wxej7m.jpg', 40.00, 'SingleProduct', 3, 'Medium', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Coffee', 7, 'Rich brewed coffee with a creamy finish', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415029/Coffe_wxej7m.jpg', 45.00, 'SingleProduct', 3, 'Large', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+	
+    ('Smoothie', 6, 'Fresh fruit smoothies for a healthy treat', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415357/Smoothie_lebze0.jpg', 40.00, 'SingleProduct', 4, 'Small', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Smoothie', 6, 'Fresh fruit smoothies for a healthy treat', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415357/Smoothie_lebze0.jpg', 45.00, 'SingleProduct', 4, 'Medium', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Smoothie', 6, 'Fresh fruit smoothies for a healthy treat', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415357/Smoothie_lebze0.jpg', 50.00, 'SingleProduct', 4, 'Large', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+	
+    ('Tropical Juice', 7, 'Freshly pressed juices in various flavors', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415357/Tropical_Juice_ozyy64.jpg', 20.00, 'SingleProduct', 5, 'Small', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Tropical Juice', 7, 'Freshly pressed juices in various flavors', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415357/Tropical_Juice_ozyy64.jpg', 22.00, 'SingleProduct', 5, 'Medium', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Tropical Juice', 7, 'Freshly pressed juices in various flavors', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415357/Tropical_Juice_ozyy64.jpg', 25.00, 'SingleProduct', 5, 'Large', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    
+    ('Ice Cream', 6, 'Delicious creamy ice cream', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415359/Ice_Cream_muvg62.jpg', 30.00, 'SingleProduct', 6, 'Small', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Ice Cream', 6, 'Delicious creamy ice cream', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415359/Ice_Cream_muvg62.jpg', 35.00, 'SingleProduct', 6, 'Medium', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Ice Cream', 6, 'Delicious creamy ice cream', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415359/Ice_Cream_muvg62.jpg', 40.00, 'SingleProduct', 6, 'Large', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+   
+	('Cake', 3, 'Freshly baked cakes in various flavors', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415357/Cake_bcuts4.jpg', 50.00, 'SingleProduct', 7, 'Small', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Cake', 3, 'Freshly baked cakes in various flavors', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415357/Cake_bcuts4.jpg', 55.00, 'SingleProduct', 7, 'Medium', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Cake', 3, 'Freshly baked cakes in various flavors', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415357/Cake_bcuts4.jpg', 60.00, 'SingleProduct', 7, 'Large', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    
+    ('Pastries', 3, 'Freshly baked pastries and bread', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415357/Pastries_u8lkgg.jpg', 20.00, 'SingleProduct', 8, 'Small', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Pastries', 3, 'Freshly baked pastries and bread', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415357/Pastries_u8lkgg.jpg', 25.00, 'SingleProduct', 8, 'Medium', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Pastries', 3, 'Freshly baked pastries and bread', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745415357/Pastries_u8lkgg.jpg', 30.00, 'SingleProduct', 8, 'Large', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+	-- Toppings
+    ('Tapioca Pearls', 8, 'Sweet chewy tapioca pearls for your drinks', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745417620/qorlc2r4vsawfhtqfa2e.jpg', 5.00, 'Extra', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Pudding', 8, 'Creamy pudding for extra sweetness', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745417619/hapbpncswf1i0cp1kbo7.webp', 3.00, 'Extra', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+	('Coconut Jelly', 8, 'Sweet coconut jelly for a tropical taste', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745417619/vv8nspzp3exszetujroi.webp', 3.50, 'Extra', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Mango', 8, 'Fresh mango pieces to add a fruity twist', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745417619/uandxjh6yozjunbhqp9k.jpg', 5.00, 'Extra', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+	('Coffee Jelly', 8, 'Coffee-flavored jelly to enhance your drink', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745417619/c64ff6fjwjrhuo4xhbvy.webp', 4.00, 'Extra', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Lychee Jelly', 8, 'Sweet lychee-flavored jelly for extra flavor', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745417619/hekhohxjtq6eynpqxahu.avif', 3.50, 'Extra', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+    ('Oreo Crumbs', 8, 'Crunchy crushed Oreo pieces for a delicious topping', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745417619/ltulutnxv2oldx016acl.webp', 4.00, 'Extra', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE),
+	('Milk Tea + Tapioca Pearls Combo', 9, 'Enjoy a milk tea with chewy tapioca pearls at a discounted price', 'https://res.cloudinary.com/ddf9yp2yo/image/upload/v1745418448/enfxjauozvwe7tfaffr2.jpg', 8.00, 'Combo', NULL, 'Parent', NOW(), 1, NOW(), 1, NULL, NULL, TRUE);
+    
 -- Insert sample data into Comboltems Tablepassword
 INSERT INTO Comboltems (Combod, ProductID, Quantity, Discount, MasterID)
 VALUES
-    (9, 2, 1, 10, NULL),
-    (9, 5, 1 , 5, NULL);
+    (40, 9, 1, 10, NULL),
+    (40, 21, 1 , 5, NULL);
 
 -- Insert sample data into PaymentMethods Table
 INSERT INTO PaymentMethods (MethodName, Description, Status)
