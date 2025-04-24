@@ -77,7 +77,7 @@ namespace MilkTeaPosManagement.Api.Controllers
         [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
         [HttpGet]
         [Route(Router.UserRoute.GetUserById)]
-        public async Task<IActionResult> GetUserById([FromRoute] int id)
+        public async Task<IActionResult> GetUserById(int id)
         {
             var result = await _accountService.GetAccountByIdAsync(id);
 
