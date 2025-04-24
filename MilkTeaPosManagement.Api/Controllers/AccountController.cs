@@ -115,7 +115,7 @@ namespace MilkTeaPosManagement.Api.Controllers
         [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
         [HttpPut]
         [Route(Router.UserRoute.UpdateUserStatus)]
-        public async Task<IActionResult> UpdateUserStatus([FromRoute] int id)
+        public async Task<IActionResult> UpdateUserStatus(int id)
         {
             var result = await _accountService.UpdateAccountStatusAsync(id);
 
