@@ -94,26 +94,12 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 foreach (var sizeRequest in sizes)
                 {
 
-                    string sizeImageUrl = parentImageUrl;
-                    if (sizeRequest.SizeImage != null)
-                    {
-                        sizeImageUrl = await _cloudinaryService.UploadImageAsync(sizeRequest.SizeImage);
-                        if (string.IsNullOrEmpty(sizeImageUrl))
-                        {
-                            await _uow.RollbackTransactionAsync();
-                            return new MethodResult<List<Product>>.Failure(
-                                $"Failed to upload image for variant {sizeRequest.Size}",
-                                StatusCodes.Status500InternalServerError
-                            );
-                        }
-                    }
-
                     var sizeProduct = new Product
                     {
                         ProductName = parentRequest.ProductName,
                         CategoryId = parentRequest.CategoryId,
                         Description = parentRequest.Description,
-                        ImageUrl = sizeImageUrl,
+                        ImageUrl = parentImageUrl,
                         Prize = sizeRequest.Price,
                         ProductType = ProductConstant.PRODUCT_TYPE_SINGLE_PRODUCT,
                         ParentId = createdParentProduct.ProductId,
@@ -130,7 +116,6 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     createdProducts.Add(sizeProduct);
                 }
 
-                // Commit transaction
                 await _uow.CommitTransactionAsync();
                 return new MethodResult<List<Product>>.Success(createdProducts);
             }
@@ -734,6 +719,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
 
                     product.CategoryId = request.CategoryId;
                 }
+                await _uow.BeginTransactionAsync();
                 if (request.Image != null)
                 {
                     var imageUrl = await _cloudinaryService.UploadImageAsync(request.Image);
@@ -782,6 +768,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                             Combod = product.ProductId,
                             ProductId = comboItem.ProductId,
                             Quantity = comboItem.Quantity,
+                            MasterId = comboItem.MasterId,
                             Discount = comboItem.Discount
                         };
 
@@ -800,6 +787,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             }
             catch (Exception ex)
             {
+                await _uow.RollbackTransactionAsync();
                 return new MethodResult<ProductResponse>.Failure(
                     $"Error updating combo product: {ex.Message}",
                     StatusCodes.Status500InternalServerError

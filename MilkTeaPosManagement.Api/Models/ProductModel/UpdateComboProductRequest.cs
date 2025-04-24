@@ -21,5 +21,7 @@ namespace MilkTeaPosManagement.Api.Models.ProductModel
         public int ProductId { get; set; }
         public int Quantity { get; set; }
         public int? Discount { get; set; }
+
+        public int? MasterId { get; set; }
     }
 }

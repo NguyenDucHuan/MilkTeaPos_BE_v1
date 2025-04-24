@@ -11,7 +11,6 @@ namespace MilkTeaPosManagement.Api.Models.ProductModel
         [Required(ErrorMessage = "Price is required")]
         public decimal Price { get; set; }
 
-        public IFormFile? SizeImage { get; set; }
     }
 
     public class CreateProductParentRequest
@@ -23,6 +22,7 @@ namespace MilkTeaPosManagement.Api.Models.ProductModel
         public int CategoryId { get; set; }
 
         public string Description { get; set; }
+        [Required(ErrorMessage = "Image is required")]
 
         public IFormFile ParentImage { get; set; }
         public List<ProductSizeRequest> Sizes { get; set; } = new List<ProductSizeRequest>();
