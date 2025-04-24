@@ -32,7 +32,7 @@ namespace MilkTeaPosManagement.Api.Controllers
 
         [HttpGet]
         [Route(Router.CategoryRoute.GetById)]
-        public async Task<IActionResult> GetCategoryById([FromRoute] int id)
+        public async Task<IActionResult> GetCategoryById(int id)
         {
             var result = await _categoryService.GetCategoryByIdAsync(id);
 
