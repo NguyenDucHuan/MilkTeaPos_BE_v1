@@ -103,7 +103,7 @@ namespace MilkTeaPosManagement.Api.Controllers
         [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
         [HttpPut]
         [Route(Router.UserRoute.UpdateUser)]
-        public async Task<IActionResult> UpdateUser([FromRoute] int id, [FromForm] UpdateUserRequest request, IFormFile avatarFile)
+        public async Task<IActionResult> UpdateUser(int id, [FromForm] UpdateUserRequest request, IFormFile avatarFile)
         {
             var result = await _accountService.UpdateAccountAsync(id, request, avatarFile);
 
@@ -118,7 +118,6 @@ namespace MilkTeaPosManagement.Api.Controllers
         public async Task<IActionResult> UpdateUserStatus(int id)
         {
             var result = await _accountService.UpdateAccountStatusAsync(id);
-
             return result.Match(
                 (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
                 Ok
