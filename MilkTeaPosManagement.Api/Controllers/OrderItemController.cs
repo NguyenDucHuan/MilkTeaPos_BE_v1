@@ -58,9 +58,9 @@ namespace MilkTeaPosManagement.Api.Controllers
             );
         }
         [HttpDelete("remove-from-cart")]
-        public async Task<IActionResult> Delete(int productId, int quantity)
+        public async Task<IActionResult> Delete(int orderItemId, int quantity)
         {
-            var result = await _service.RemoveFromCart(productId, quantity);
+            var result = await _service.RemoveFromCart(orderItemId, quantity);
             return result.Match(
                 (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
                 Ok

@@ -91,22 +91,67 @@ namespace MilkTeaPosManagement.Api.Services.Implements
         }
         public async Task<MethodResult<Orderitem>> AddToCart(OrderItemRequest request)
         {
-            var existed = await _uow.GetRepository<Orderitem>().SingleOrDefaultAsync(
+            var existeds = await _uow.GetRepository<Orderitem>().GetListAsync(
                 predicate: pm => pm.ProductId == request.ProductId && pm.OrderId == null);
             var product = await _uow.GetRepository<Product>().SingleOrDefaultAsync(predicate: pm => pm.ProductId == request.ProductId);
             if (product == null)
             {
                 return new MethodResult<Orderitem>.Failure("Product not found!", StatusCodes.Status400BadRequest);
             }
-            if (existed != null)
+            var toppings = new List<Product>();
+            if (request.ToppingIds != null && request.ToppingIds.Count > 0)
             {
-                existed.Quantity += request.Quantity;             
-                existed.Price += product.Prize * request.Quantity;
-                _uow.GetRepository<Orderitem>().UpdateAsync(existed);
-                if (await _uow.CommitAsync() > 0)
+                var index = 1;
+                foreach (var toppingId in  request.ToppingIds)
                 {
-                    return new MethodResult<Orderitem>.Success(existed);
-                }                
+                    var topping = await _uow.GetRepository<Product>().SingleOrDefaultAsync(predicate: tp => tp.ProductId == toppingId);
+                    if (topping == null)
+                    {
+                        return new MethodResult<Orderitem>.Failure("Topping [#"+ index +"] not found!", StatusCodes.Status400BadRequest);
+                    }
+                    toppings.Add(topping);
+                    index++;
+                }
+            }
+            if (existeds != null)
+            {
+                foreach (var existed in existeds)
+                {
+                    var existedToppings = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.MasterId == existed.OrderItemId);
+                    var isSame = true;
+                    if (request.ToppingIds.Count != existedToppings.Count)
+                    {
+                        isSame = false;
+                    }
+                    else
+                    {
+                        foreach (var existedTopping in existedToppings)
+                        {
+                            if (!request.ToppingIds.Contains(existedTopping.ProductId))
+                            {
+                                isSame = false;
+                            }
+                        }
+                    }
+                    if (isSame)
+                    {
+                        existed.Quantity += request.Quantity;
+                        existed.Price += product.Prize * request.Quantity;
+                        _uow.GetRepository<Orderitem>().UpdateAsync(existed);
+                        foreach (var existedTopping in existedToppings)
+                        {
+                            var basePrice = existedTopping.Price / existedTopping.Quantity;
+                            existedTopping.Quantity += request.Quantity;
+                            existedTopping.Price += basePrice * request.Quantity;
+                            _uow.GetRepository<Orderitem>().UpdateAsync(existedTopping);
+                        }
+                        if (await _uow.CommitAsync() > 0)
+                        {
+                            return new MethodResult<Orderitem>.Success(existed);
+                        }
+                        return new MethodResult<Orderitem>.Failure("Add to cart not success", StatusCodes.Status400BadRequest);
+                    }
+                }                               
             }
             var items = await _uow.GetRepository<Orderitem>().GetListAsync();
             var itemId = items != null && items.Count > 0 ? items.Last().OrderItemId + 1 : 1;
@@ -115,10 +160,22 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 OrderItemId = itemId,
                 Quantity = request.Quantity,
                 Price = product.Prize * request.Quantity,
-                MasterId = request.MasterId,
                 ProductId = request.ProductId,
             };
             await _uow.GetRepository<Orderitem>().InsertAsync(item);
+            foreach (var topping in toppings)
+            {
+                itemId++;
+                var orderItem = new Orderitem
+                {
+                    OrderItemId = itemId,
+                    Quantity = request.Quantity,
+                    Price = topping.Prize * request.Quantity,
+                    MasterId = item.OrderItemId,
+                    ProductId = topping .ProductId,
+                };
+                await _uow.GetRepository<Orderitem>().InsertAsync(orderItem);
+            }            
             if (await _uow.CommitAsync() > 0)
             {
                 return new MethodResult<Orderitem>.Success(item);
@@ -126,25 +183,34 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             return new MethodResult<Orderitem>.Failure("Add to cart not success", StatusCodes.Status400BadRequest);
             
         }
-        public async Task<MethodResult<Orderitem>> RemoveFromCart(int productId, int quantity)
+        public async Task<MethodResult<Orderitem>> RemoveFromCart(int orderItemId, int quantity)
         {
             var existed = await _uow.GetRepository<Orderitem>().SingleOrDefaultAsync(
-                predicate: pm => pm.ProductId == productId && pm.OrderId == null);
-            var product = await _uow.GetRepository<Product>().SingleOrDefaultAsync(predicate: pm => pm.ProductId == productId);
-            if (product == null)
-            {
-                return new MethodResult<Orderitem>.Failure("Product not found!", StatusCodes.Status400BadRequest);
-            }
+                predicate: pm => pm.OrderItemId == orderItemId && pm.OrderId == null);
             if (existed == null)
             {
                 return new MethodResult<Orderitem>.Failure("Item not found!", StatusCodes.Status400BadRequest);
             }
+            var product = await _uow.GetRepository<Product>().SingleOrDefaultAsync(predicate: pm => pm.ProductId == existed.ProductId);
+            if (product == null)
+            {
+                return new MethodResult<Orderitem>.Failure("Product not found!", StatusCodes.Status400BadRequest);
+            }
+            var toppings = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.MasterId == existed.OrderItemId);
 
             if (existed.Quantity > quantity)
             {
                 existed.Quantity -= quantity;
                 existed.Price -= product.Prize * quantity;
                 _uow.GetRepository<Orderitem>().UpdateAsync(existed);
+
+                foreach (var item in toppings)
+                {
+                    var basePrice = item.Price/item.Quantity;
+                    item.Quantity -= quantity;
+                    item.Price -= basePrice * quantity;
+                    _uow.GetRepository<Orderitem>().UpdateAsync(item);
+                }
                 if (await _uow.CommitAsync() > 0)
                 {
                     return new MethodResult<Orderitem>.Success(existed);
