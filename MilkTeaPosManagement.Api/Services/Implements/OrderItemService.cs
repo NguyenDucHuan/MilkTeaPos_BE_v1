@@ -225,18 +225,43 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             return new MethodResult<Orderitem>.Failure("Cannot update quantity!", StatusCodes.Status400BadRequest);
             
         }
-        public async Task<MethodResult<object>> ClearCart()
+        public async Task<MethodResult<Orderitem>> AddQuantity(int orderItemId, int quantity)
         {
-            var cart = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.OrderId == null);
-            foreach(var item in cart)
+            var existed = await _uow.GetRepository<Orderitem>().SingleOrDefaultAsync(
+                predicate: pm => pm.OrderItemId == orderItemId && pm.OrderId == null);
+            if (existed == null)
             {
-                _uow.GetRepository<Orderitem>().DeleteAsync(item);
+                return new MethodResult<Orderitem>.Failure("Item not found!", StatusCodes.Status400BadRequest);
             }
+            var product = await _uow.GetRepository<Product>().SingleOrDefaultAsync(predicate: pm => pm.ProductId == existed.ProductId);
+            if (product == null)
+            {
+                return new MethodResult<Orderitem>.Failure("Product not found!", StatusCodes.Status400BadRequest);
+            }
+            var toppings = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.MasterId == existed.OrderItemId);
+
+                existed.Quantity += quantity;
+                existed.Price += product.Prize * quantity;
+                _uow.GetRepository<Orderitem>().UpdateAsync(existed);
+
+                foreach (var item in toppings)
+                {
+                    var basePrice = item.Price / item.Quantity;
+                    item.Quantity += quantity;
+                    item.Price += basePrice * quantity;
+                    _uow.GetRepository<Orderitem>().UpdateAsync(item);
+                }
+                if (await _uow.CommitAsync() > 0)
+                {
+                    return new MethodResult<Orderitem>.Success(existed);
+                }
+
             if (await _uow.CommitAsync() > 0)
             {
-                return new MethodResult<object>.Success(cart);
+                return new MethodResult<Orderitem>.Success(existed);
             }
-            return new MethodResult<object>.Failure("Cannot clear cart!", StatusCodes.Status400BadRequest);
+            return new MethodResult<Orderitem>.Failure("Cannot update quantity!", StatusCodes.Status400BadRequest);
+
         }
         public async Task<ICollection<Orderitem>> GetToppingsInCart(int masterId)
         {
