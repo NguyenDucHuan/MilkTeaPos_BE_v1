@@ -13,7 +13,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
         private readonly IUnitOfWork _uow = uow;
         public async Task<(ICollection<Orderitem>, List<Product>?)> GetCartAsync()
         {
-            var cart = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.OrderId == null, include: oi => oi.Include(i => i.Product));
+            var cart = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.OrderId == null && oi.MasterId == null, include: oi => oi.Include(i => i.Product));
             var combos = await _uow.GetRepository<Product>().GetListAsync(predicate: p => p.ProductType == "Combo" && p.ParentId == null, include: p => p.Include(c => c.Comboltems));
             var offers = GetOffers(cart, combos);
             return (cart, offers);
@@ -238,6 +238,10 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             }
             return new MethodResult<object>.Failure("Cannot clear cart!", StatusCodes.Status400BadRequest);
         }
-
+        public async Task<ICollection<Orderitem>> GetToppingsInCart(int masterId)
+        {
+            var toppings = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.OrderId == null && oi.MasterId == masterId, include: oi => oi.Include(i => i.Product));
+            return toppings;
+        }
     }
 }

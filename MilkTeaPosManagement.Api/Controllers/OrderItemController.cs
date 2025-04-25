@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using MilkTeaPosManagement.Api.Models.OrderItemModels;
 using MilkTeaPosManagement.Api.Models.PaymentMethodModels;
 using MilkTeaPosManagement.Api.Services.Interfaces;
+using MilkTeaPosManagement.Domain.Models;
 
 namespace MilkTeaPosManagement.Api.Controllers
 {
@@ -17,9 +18,37 @@ namespace MilkTeaPosManagement.Api.Controllers
             try
             {
                 var result = await _service.GetCartAsync();
+                var cartResponse = new List<object>();
+                foreach (var item in result.Item1)
+                {
+                    var toppings = await _service.GetToppingsInCart(item.OrderItemId);
+                    var toppingOfProduct = new List<object>();
+                    decimal? toppingPrice = 0;
+                    foreach (var topping in toppings)
+                    {
+                        toppingOfProduct.Add(new
+                        {
+                            toppingId = topping.ProductId,
+                            toppingName = topping.Product.ProductName,
+                            toppingPrize = topping.Product.Prize,
+                        });
+                        toppingPrice += topping.Price;
+                    }
+                    cartResponse.Add(new
+                    {
+                        orderItemId = item.OrderItemId,
+                        productId = item.ProductId,
+                        productName = item.Product.ProductName,
+                        sizeId = item.Product.SizeId,
+                        prize = item.Product.Prize,
+                        quantity = item.Quantity,
+                        subPrice = item.Price + toppingPrice,
+                        toppings = toppingOfProduct
+                    });
+                }
                 return Ok(new
                 {
-                    cart = result.Item1,
+                    cart = cartResponse,
                     offers = result.Item2
                 });
             } catch (Exception ex)
@@ -66,14 +95,14 @@ namespace MilkTeaPosManagement.Api.Controllers
                 Ok
             );
         }
-        [HttpDelete("clear-cart")]
-        public async Task<IActionResult> Remove()
-        {
-            var result = await _service.ClearCart();
-            return result.Match(
-                (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
-                Ok
-            );
-        }
+        //[HttpDelete("clear-cart")]
+        //public async Task<IActionResult> Remove()
+        //{
+        //    var result = await _service.ClearCart();
+        //    return result.Match(
+        //        (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
+        //        Ok
+        //    );
+        //}
     }
 }
