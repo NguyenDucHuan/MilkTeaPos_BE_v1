@@ -14,6 +14,10 @@
         public int? ParentId { get; set; }
         public bool? Status { get; set; }
         public DateTime? CreateAt { get; set; }
+        public int? CreateBy { get; set; }
+        public DateTime? UpdateAt { get; set; }
+        public int? UpdateBy { get; set; }
+
         public List<ProductResponse> Variants { get; set; } = new List<ProductResponse>();
         public List<ComboItemResponse> ComboItems { get; set; } = new List<ComboItemResponse>();
     }

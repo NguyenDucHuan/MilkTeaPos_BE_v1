@@ -387,7 +387,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 foreach (var combo in comboProducts)
                 {
                     var mainItems = allComboItems
-                        .Where(c => c.Combod == combo.ProductId && c.MasterId == null)
+                        .Where(c => (c.Combod == combo.ProductId && c.MasterId == null)||(c.Combod == combo.ProductId && c.MasterId == 0))
                         .ToList();
 
                     foreach (var mainItem in mainItems)
@@ -491,7 +491,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
 
                     product.ImageUrl = imageUrl;
                 }
-                product.UpdateAt = DateTime.UtcNow;
+                product.UpdateAt = DateTime.Now;
                 product.UpdateBy = userId;
 
                 _uow.GetRepository<Product>().UpdateAsync(product);
@@ -529,7 +529,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                             if (variant.Status.HasValue)
                                 sizeProduct.Status = variant.Status;
 
-                            sizeProduct.UpdateAt = DateTime.UtcNow;
+                            sizeProduct.UpdateAt = DateTime.Now;
                             sizeProduct.UpdateBy = userId;
 
                             _uow.GetRepository<Product>().UpdateAsync(sizeProduct);
@@ -592,7 +592,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 if (request.Status.HasValue)
                     product.Status = request.Status;
 
-                product.UpdateAt = DateTime.UtcNow;
+                product.UpdateAt = DateTime.Now;
                 product.UpdateBy = userId;
 
                 _uow.GetRepository<Product>().UpdateAsync(product);
@@ -669,7 +669,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     product.Status = request.Status;
 
 
-                product.UpdateAt = DateTime.UtcNow;
+                product.UpdateAt = DateTime.Now;
                 product.UpdateBy = userId;
                 _uow.GetRepository<Product>().UpdateAsync(product);
                 await _uow.CommitAsync();
@@ -693,31 +693,17 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 var product = await _uow.GetRepository<Product>().SingleOrDefaultAsync(
                     predicate: p => p.ProductId == request.ProductId && p.ProductType == "Combo",
-                    include: q => q.Include(p => p.Category).Include(p => p.Comboltems)
-                );
+                    include: q => q.Include(p => p.Category));
 
+                var comboItems = await _uow.GetRepository<Comboltem>().GetListAsync(
+                    predicate: c => c.Combod == product.ProductId
+                );
                 if (product == null)
                 {
                     return new MethodResult<ProductResponse>.Failure(
                         "Combo product not found",
                         StatusCodes.Status404NotFound
                     );
-                }
-                if (request.CategoryId.HasValue && request.CategoryId != product.CategoryId)
-                {
-                    var category = await _uow.GetRepository<Category>().SingleOrDefaultAsync(
-                       predicate: c => c.CategoryId == request.CategoryId
-                    );
-
-                    if (category == null)
-                    {
-                        return new MethodResult<ProductResponse>.Failure(
-                            "Category not found",
-                            StatusCodes.Status404NotFound
-                        );
-                    }
-
-                    product.CategoryId = request.CategoryId;
                 }
                 await _uow.BeginTransactionAsync();
                 if (request.Image != null)
@@ -745,10 +731,15 @@ namespace MilkTeaPosManagement.Api.Services.Implements
 
                 if (request.Status.HasValue)
                     product.Status = request.Status;
+                product.UpdateAt = DateTime.Now;
+                product.UpdateBy = userId;
 
+                _uow.GetRepository<Product>().UpdateAsync(product);
+
+                await _uow.CommitAsync();
                 if (request.ComboItems != null && request.ComboItems.Any())
                 {
-                    foreach (var item in product.Comboltems.ToList())
+                    foreach (var item in comboItems.ToList())
                     {
                         _uow.GetRepository<Comboltem>().DeleteAsync(item);
                     }
@@ -773,14 +764,12 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         };
 
                         await _uow.GetRepository<Comboltem>().InsertAsync(newComboItem);
+                        await _uow.CommitAsync();
                     }
                 }
-                product.UpdateAt = DateTime.UtcNow;
-                product.UpdateBy = userId;
-
-                _uow.GetRepository<Product>().UpdateAsync(product);
-                await _uow.CommitAsync();
+                await _uow.CommitTransactionAsync();
                 var productResponse = _mapper.Map<ProductResponse>(product);
+
                 await EnrichProductDetails(new List<ProductResponse> { productResponse });
 
                 return new MethodResult<ProductResponse>.Success(productResponse);
@@ -809,7 +798,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     );
                 }
                 await _uow.BeginTransactionAsync();
-                product.DisableAt = DateTime.UtcNow;
+                product.DisableAt = DateTime.Now;
                 product.DisableBy = userId;
                 product.Status = product.Status == true ? false : true;
                 if (product.ProductType == ProductConstant.PRODUCT_TYPE_MATTER_PRODUCT)
@@ -820,7 +809,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     foreach (var sizeProduct in sizeProducts)
                     {
                         sizeProduct.Status = product.Status;
-                        sizeProduct.DisableAt = DateTime.UtcNow;
+                        sizeProduct.DisableAt = DateTime.Now;
                         sizeProduct.DisableBy = userId;
                         _uow.GetRepository<Product>().UpdateAsync(sizeProduct);
                     }

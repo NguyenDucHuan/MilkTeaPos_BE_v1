@@ -143,7 +143,7 @@ namespace MilkTeaPosManagement.Api.Controllers
         [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
         [HttpPut]
         [Route(Router.ProductRoute.UpdateSize)]
-        public async Task<IActionResult> UpdateSizeProduct([FromBody] UpdateSizeProductRequest request)
+        public async Task<IActionResult> UpdateSizeProduct([FromForm] UpdateSizeProductRequest request)
         {
             var userIdString = User.FindFirst(ClaimTypes.Sid)?.Value;
             if (!int.TryParse(userIdString, out var userId))

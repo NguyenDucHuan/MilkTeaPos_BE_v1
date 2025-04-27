@@ -28,7 +28,7 @@ namespace MilkTeaPosManagement.Api.Models.AuthenticationModels
                 issuer,
                 audience,
                 claims,
-                DateTime.UtcNow,
+                DateTime.Now,
                 utcExpirationTime,
                 credentials);
 
@@ -44,7 +44,7 @@ namespace MilkTeaPosManagement.Api.Models.AuthenticationModels
                 new Claim(ClaimTypes.Name, user.Username),
                 new Claim(ClaimTypes.Role, user.Role)
             ];
-            DateTime expirationTime = DateTime.UtcNow.AddMinutes(_configuration.AccessTokenExpiration);
+            DateTime expirationTime = DateTime.Now.AddMinutes(_configuration.AccessTokenExpiration);
             return new AccessToken
             {
                 Token = await GenerateToken(
@@ -59,7 +59,7 @@ namespace MilkTeaPosManagement.Api.Models.AuthenticationModels
 
         public async Task<RefreshToken> GenerateRefreshToken()
         {
-            DateTime expirationTime = DateTime.UtcNow.AddMinutes(_configuration.RefreshTokenExpiration);
+            DateTime expirationTime = DateTime.Now.AddMinutes(_configuration.RefreshTokenExpiration);
             return new RefreshToken
             {
                 Token = await GenerateToken(
@@ -77,7 +77,7 @@ namespace MilkTeaPosManagement.Api.Models.AuthenticationModels
             {
                 new Claim(ClaimTypes.Email, email)
             };
-            DateTime expirationTime = DateTime.UtcNow.AddMinutes(_configuration.EmailVerificationExpiration);
+            DateTime expirationTime = DateTime.Now.AddMinutes(_configuration.EmailVerificationExpiration);
             return await GenerateToken(
                     _configuration.EmailVerificationSecret,
                     _configuration.Issuer,
