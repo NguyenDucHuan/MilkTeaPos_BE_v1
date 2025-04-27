@@ -71,7 +71,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             decimal? totalProfit = 0;
             var totalOrigin = 0;
 
-            while(fromDate.Value.Day <= toDate.Value.Day)
+            while(fromDate.Value.Date <= toDate.Value.Date)
             {
                 var orders = await _uow.GetRepository<Order>().GetListAsync(predicate: o => o.CreateAt.Value.Year == fromDate.Value.Year && o.CreateAt.Value.Month == fromDate.Value.Month && o.CreateAt.Value.Day == fromDate.Value.Day
                                                                                             && o.CreateAt.Value.Day == fromDate.Value.Day);

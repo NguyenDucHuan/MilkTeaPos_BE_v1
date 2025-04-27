@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using MilkTeaPosManagement.Api.Constants;
 using MilkTeaPosManagement.Api.Services.Interfaces;
 
 namespace MilkTeaPosManagement.Api.Controllers
 {
     [Route("api/statistic")]
     [ApiController]
+    [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
     public class StatisticController(IStatisticService service) : ControllerBase
     {
         private readonly IStatisticService _service = service;
