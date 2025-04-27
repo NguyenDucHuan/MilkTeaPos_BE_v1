@@ -25,8 +25,6 @@ namespace MilkTeaPosManagement.Api.Models.ProductModel
     public class UpdateSizeProductRequest
     {
         [Required]
-        public int ProductId { get; set; }
-
         public string? SizeId { get; set; }
 
         public decimal? Prize { get; set; }

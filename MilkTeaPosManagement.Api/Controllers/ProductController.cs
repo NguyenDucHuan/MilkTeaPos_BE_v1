@@ -139,30 +139,6 @@ namespace MilkTeaPosManagement.Api.Controllers
                 })
             );
         }
-
-        [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
-        [HttpPut]
-        [Route(Router.ProductRoute.UpdateSize)]
-        public async Task<IActionResult> UpdateSizeProduct([FromForm] UpdateSizeProductRequest request)
-        {
-            var userIdString = User.FindFirst(ClaimTypes.Sid)?.Value;
-            if (!int.TryParse(userIdString, out var userId))
-            {
-                return BadRequest("Invalid user ID.");
-            }
-
-            var result = await _productService.UpdateSizeProductAsync(userId, request);
-
-            return result.Match(
-                (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
-                product => Ok(new
-                {
-                    message = "Size product updated successfully",
-                    data = product
-                })
-            );
-        }
-
         [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
         [HttpPut]
         [Route(Router.ProductRoute.UpdateExtra)]

@@ -12,7 +12,6 @@ namespace MilkTeaPosManagement.Api.Services.Interfaces
         Task<MethodResult<PaginatedResponse<ProductResponse>>> GetFilteredProductsAsync(ProductFilterModel filter);
         Task<MethodResult<ProductResponse>> GetProductByIdAsync(int id);
         Task<MethodResult<ProductResponse>> UpdateMasterProductAsync(int userId, UpdateMasterProductRequest request);
-        Task<MethodResult<ProductResponse>> UpdateSizeProductAsync(int userId, UpdateSizeProductRequest request);
         Task<MethodResult<ProductResponse>> UpdateExtraProductAsync(int userId, UpdateExtraProductRequest request);
         Task<MethodResult<ProductResponse>> UpdateComboProductAsync(int userId, UpdateComboProductRequest request);
         Task<MethodResult<bool>> UpdateProductStatusAsync(int userId, int id);
