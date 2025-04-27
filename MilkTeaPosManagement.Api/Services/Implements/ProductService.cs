@@ -387,7 +387,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 foreach (var combo in comboProducts)
                 {
                     var mainItems = allComboItems
-                        .Where(c => (c.Combod == combo.ProductId && c.MasterId == null)||(c.Combod == combo.ProductId && c.MasterId == 0))
+                        .Where(c => (c.Combod == combo.ProductId && c.MasterId == null) || (c.Combod == combo.ProductId && c.MasterId == 0))
                         .ToList();
 
                     foreach (var mainItem in mainItems)
@@ -502,9 +502,8 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     foreach (var variant in request.Variants)
                     {
                         var sizeProduct = await _uow.GetRepository<Product>().SingleOrDefaultAsync(
-                            predicate: p => p.ProductId == variant.ProductId && p.ParentId == product.ProductId
+                            predicate: p => p.SizeId == variant.SizeId && p.ParentId == product.ProductId
                         );
-
 
                         if (sizeProduct != null)
                         {
@@ -535,6 +534,40 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                             _uow.GetRepository<Product>().UpdateAsync(sizeProduct);
                             await _uow.CommitAsync();
                         }
+                        else
+                        {
+                            var imageUrl = product.ImageUrl;
+                            if (variant.Image != null)
+                            {
+                                var imageUrlu = await _cloudinaryService.UploadImageAsync(variant.Image);
+                                if (string.IsNullOrEmpty(imageUrl))
+                                {
+                                    return new MethodResult<ProductResponse>.Failure(
+                                        "Failed to upload product image",
+                                        StatusCodes.Status500InternalServerError
+                                    );
+                                }
+                                imageUrl = imageUrlu;
+                            }
+                            var newSizeProduct = new Product
+                            {
+                                ProductName = product.ProductName,
+                                CategoryId = product.CategoryId,
+                                Description = product.Description,
+                                ImageUrl = product.ImageUrl,
+                                Prize = variant.Prize,
+                                ProductType = ProductConstant.PRODUCT_TYPE_SINGLE_PRODUCT,
+                                ParentId = product.ProductId,
+                                SizeId = variant.SizeId,
+                                CreateAt = DateTime.Now,
+                                CreateBy = userId,
+                                UpdateAt = DateTime.Now,
+                                UpdateBy = userId,
+                                Status = variant.Status ?? ProductConstant.PRODUCT_STATUS_ACTIVE
+                            };
+                            await _uow.GetRepository<Product>().InsertAsync(newSizeProduct);
+                            await _uow.CommitAsync();
+                        }
                     }
                 }
 
@@ -555,62 +588,6 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             }
         }
 
-        public async Task<MethodResult<ProductResponse>> UpdateSizeProductAsync(int userId, UpdateSizeProductRequest request)
-        {
-            try
-            {
-                var product = await _uow.GetRepository<Product>().SingleOrDefaultAsync(
-                    predicate: p => p.ProductId == request.ProductId && p.ParentId != null,
-                    include: q => q.Include(p => p.Category)
-                );
-                if (product == null)
-                {
-                    return new MethodResult<ProductResponse>.Failure(
-                        "Size product not found",
-                        StatusCodes.Status404NotFound
-                    );
-                }
-                if (request.Image != null)
-                {
-                    var imageUrl = await _cloudinaryService.UploadImageAsync(request.Image);
-                    if (string.IsNullOrEmpty(imageUrl))
-                    {
-                        return new MethodResult<ProductResponse>.Failure(
-                            "Failed to upload product image",
-                            StatusCodes.Status500InternalServerError
-                        );
-                    }
-                    product.ImageUrl = imageUrl;
-                }
-
-                if (request.Prize.HasValue)
-                    product.Prize = request.Prize;
-
-                if (!string.IsNullOrEmpty(request.SizeId))
-                    product.SizeId = request.SizeId;
-
-                if (request.Status.HasValue)
-                    product.Status = request.Status;
-
-                product.UpdateAt = DateTime.Now;
-                product.UpdateBy = userId;
-
-                _uow.GetRepository<Product>().UpdateAsync(product);
-                await _uow.CommitAsync();
-
-                var productResponse = _mapper.Map<ProductResponse>(product);
-                await EnrichProductDetails(new List<ProductResponse> { productResponse });
-
-                return new MethodResult<ProductResponse>.Success(productResponse);
-            }
-            catch (Exception ex)
-            {
-                return new MethodResult<ProductResponse>.Failure(
-                    $"Error updating variant product: {ex.Message}",
-                    StatusCodes.Status500InternalServerError
-                );
-            }
-        }
 
         public async Task<MethodResult<ProductResponse>> UpdateExtraProductAsync(int userId, UpdateExtraProductRequest request)
         {
@@ -736,7 +713,6 @@ namespace MilkTeaPosManagement.Api.Services.Implements
 
                 _uow.GetRepository<Product>().UpdateAsync(product);
 
-                await _uow.CommitAsync();
                 if (request.ComboItems != null && request.ComboItems.Any())
                 {
                     foreach (var item in comboItems.ToList())
