@@ -120,7 +120,7 @@ namespace MilkTeaPosManagement.Api.Controllers
         [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
         [HttpPut]
         [Route(Router.ProductRoute.UpdateMaster)]
-        public async Task<IActionResult> UpdateMasterProduct([FromForm] UpdateMasterProductRequest request)
+        public async Task<IActionResult> UpdateMasterProduct([FromForm] UpdateMasterProductRequest request, List<UpdateSizeProductRequest> Variants)
         {
             var userIdString = User.FindFirst(ClaimTypes.Sid)?.Value;
             if (!int.TryParse(userIdString, out var userId))
@@ -128,7 +128,7 @@ namespace MilkTeaPosManagement.Api.Controllers
                 return BadRequest("Invalid user ID.");
             }
 
-            var result = await _productService.UpdateMasterProductAsync(userId, request);
+            var result = await _productService.UpdateMasterProductAsync(userId, request , Variants);
 
             return result.Match(
                 (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
