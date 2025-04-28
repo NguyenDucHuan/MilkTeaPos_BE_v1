@@ -19,7 +19,7 @@ namespace MilkTeaPosManagement.Api.Models.ProductModel
 
         public bool? Status { get; set; }
 
-        public List<UpdateSizeProductRequest>? Variants { get; set; }
+       
 
     }
     public class UpdateSizeProductRequest

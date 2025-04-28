@@ -431,7 +431,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 );
             }
         }
-        public async Task<MethodResult<ProductResponse>> UpdateMasterProductAsync(int userId, UpdateMasterProductRequest request)
+        public async Task<MethodResult<ProductResponse>> UpdateMasterProductAsync(int userId, UpdateMasterProductRequest request , List<UpdateSizeProductRequest> Variants)
         {
             try
             {
@@ -497,9 +497,9 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 _uow.GetRepository<Product>().UpdateAsync(product);
                 await _uow.CommitAsync();
 
-                if (request.Variants != null && request.Variants.Any())
+                if (Variants != null && Variants.Any())
                 {
-                    foreach (var variant in request.Variants)
+                    foreach (var variant in Variants)
                     {
                         var sizeProduct = await _uow.GetRepository<Product>().SingleOrDefaultAsync(
                             predicate: p => p.SizeId == variant.SizeId && p.ParentId == product.ProductId
