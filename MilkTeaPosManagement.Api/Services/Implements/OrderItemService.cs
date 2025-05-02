@@ -113,17 +113,27 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     index++;
                 }
             }
+            var comboItems = new List<Comboltem>();
+            if (product.ProductType == "Combo")
+            {
+                var cbIs = await _uow.GetRepository<Comboltem>().GetListAsync(predicate: ci => ci.Combod == request.ProductId);
+                foreach (var cb in cbIs)
+                {
+                    comboItems.Add(cb);
+                }
+            }
             if (existeds != null)
             {
                 foreach (var existed in existeds)
                 {
                     var existedToppings = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.MasterId == existed.OrderItemId);
+                    var existedComboItem = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.MasterId == existed.OrderItemId && oi.Price == 0);
                     var isSame = true;
-                    if (request.ToppingIds.Count != existedToppings.Count)
+                    if (existedToppings != null && request.ToppingIds!=null && request.ToppingIds.Count != existedToppings.Count)
                     {
                         isSame = false;
                     }
-                    else
+                    else if (existedToppings != null && request.ToppingIds != null)
                     {
                         foreach (var existedTopping in existedToppings)
                         {
@@ -145,6 +155,24 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                             existedTopping.Price += basePrice * request.Quantity;
                             _uow.GetRepository<Orderitem>().UpdateAsync(existedTopping);
                         }
+                        if (await _uow.CommitAsync() > 0)
+                        {
+                            return new MethodResult<Orderitem>.Success(existed);
+                        }
+                        return new MethodResult<Orderitem>.Failure("Add to cart not success", StatusCodes.Status400BadRequest);
+                    }
+                    if (existedComboItem != null && existedComboItem.Count > 0)
+                    {
+                        foreach (var existedItem in existedComboItem)
+                        {
+                            var baseQuntity = existedItem.Quantity / existed.Quantity;
+                            existedItem.Quantity += baseQuntity;
+                            _uow.GetRepository<Orderitem>().UpdateAsync(existedItem);
+                        }
+                        existed.Quantity += request.Quantity;
+                        existed.Price += product.Prize * request.Quantity;
+                        _uow.GetRepository<Orderitem>().UpdateAsync(existed);
+                        
                         if (await _uow.CommitAsync() > 0)
                         {
                             return new MethodResult<Orderitem>.Success(existed);
@@ -175,7 +203,20 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     ProductId = topping .ProductId,
                 };
                 await _uow.GetRepository<Orderitem>().InsertAsync(orderItem);
-            }            
+            }    
+            foreach (var cbi in comboItems)
+            {
+                itemId++;
+                var orderItem = new Orderitem
+                {
+                    OrderItemId = itemId,
+                    Quantity = request.Quantity,
+                    Price = 0,
+                    MasterId = item.OrderItemId,
+                    ProductId = cbi.ProductId,
+                };
+                await _uow.GetRepository<Orderitem>().InsertAsync(orderItem);
+            }
             if (await _uow.CommitAsync() > 0)
             {
                 return new MethodResult<Orderitem>.Success(item);
@@ -272,6 +313,84 @@ namespace MilkTeaPosManagement.Api.Services.Implements
         {
             var toppings = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.OrderId == orderId && oi.MasterId == masterId, include: oi => oi.Include(i => i.Product));
             return toppings;
+        }
+        public async Task<MethodResult<Orderitem>> UpdateOrderItem(int id, OrderItemRequest request)
+        {
+            var existed = await _uow.GetRepository<Orderitem>().SingleOrDefaultAsync(
+                predicate: pm => pm.OrderItemId == id && pm.OrderId == null);
+            if (existed == null)
+            {
+                return new MethodResult<Orderitem>.Failure("Item not found!", StatusCodes.Status400BadRequest);
+            }
+            var product = await _uow.GetRepository<Product>().SingleOrDefaultAsync(predicate: pm => pm.ProductId == existed.ProductId);
+            if (product == null)
+            {
+                return new MethodResult<Orderitem>.Failure("Product not found!", StatusCodes.Status400BadRequest);
+            }
+            var existedToppings = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.MasterId == id);
+            var existedComboItem = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.MasterId == id && oi.Price == 0);
+            foreach (var existedTopping in existedToppings)
+            {
+                _uow.GetRepository<Orderitem>().DeleteAsync(existedTopping);
+            }
+            foreach (var comboItem in existedComboItem)
+            {
+                _uow.GetRepository<Orderitem>().DeleteAsync(comboItem);
+            }
+            if (await _uow.CommitAsync() <= 0)
+            {
+                return new MethodResult<Orderitem>.Failure("Edit order item fail!", StatusCodes.Status400BadRequest);
+            }
+            var items = await _uow.GetRepository<Orderitem>().GetListAsync();
+            var itemId = items != null && items.Count > 0 ? items.Last().OrderItemId + 1 : 1;
+            if (product.ProductType == "Combo")
+            {
+                var cbIs = await _uow.GetRepository<Comboltem>().GetListAsync(predicate: ci => ci.Combod == request.ProductId);                
+                foreach (var cb in cbIs)
+                {
+                    var orderItem = new Orderitem
+                    {
+                        OrderItemId = itemId,
+                        Quantity = request.Quantity,
+                        Price = 0,
+                        MasterId = existed.OrderItemId,
+                        ProductId = cb.ProductId,
+                    };
+                    itemId++;
+                    await _uow.GetRepository<Orderitem>().InsertAsync(orderItem);
+                }
+            }
+            if (request.ToppingIds != null && request.ToppingIds.Count > 0)
+            {
+                var index = 1;
+                foreach (var toppingId in request.ToppingIds)
+                {
+                    var topping = await _uow.GetRepository<Product>().SingleOrDefaultAsync(predicate: tp => tp.ProductId == toppingId);
+                    if (topping == null)
+                    {
+                        return new MethodResult<Orderitem>.Failure("Topping [#" + index + "] not found!", StatusCodes.Status400BadRequest);
+                    }
+                    var orderItem = new Orderitem
+                    {
+                        OrderItemId = itemId,
+                        Quantity = request.Quantity,
+                        Price = topping.Prize * request.Quantity,
+                        MasterId = existed.OrderItemId,
+                        ProductId = topping.ProductId,
+                    };
+                    itemId++;
+                    await _uow.GetRepository<Orderitem>().InsertAsync(orderItem);
+                    index++;
+                }
+            }
+            existed.Quantity = request.Quantity;
+            existed.ProductId = request.ProductId;
+            _uow.GetRepository<Orderitem>().UpdateAsync(existed);
+            if (await _uow.CommitAsync() <= 0)
+            {
+                return new MethodResult<Orderitem>.Failure("Edit order item fail!", StatusCodes.Status400BadRequest);
+            }
+            return new MethodResult<Orderitem>.Success(existed);
         }
     }
 }
