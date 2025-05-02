@@ -15,5 +15,6 @@ namespace MilkTeaPosManagement.Api.Services.Interfaces
         Task<MethodResult<Orderitem>> AddQuantity(int orderItemId, int quantity);
         Task<ICollection<Orderitem>> GetToppingsInCart(int masterId);
         Task<ICollection<Orderitem>> GetToppingsInOrder(int orderId, int masterId);
+        Task<MethodResult<Orderitem>> UpdateOrderItem(int id, OrderItemRequest request);
     }
 }

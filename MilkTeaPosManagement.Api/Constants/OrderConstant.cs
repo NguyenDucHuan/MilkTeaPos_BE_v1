@@ -6,5 +6,6 @@
         public const string SHIPPED = "Shipped";
         public const string DELIVERED = "Delivered";
         public const string CANCELED = "Cancelled";
+        public const string SUCCESS = "Success";
     }
 }

@@ -9,7 +9,7 @@ namespace MilkTeaPosManagement.Api.Controllers
 {
     [Route("api/order-item")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class OrderItemController(IOrderItemService service) : ControllerBase
     {
         private readonly IOrderItemService _service = service;
@@ -128,6 +128,15 @@ namespace MilkTeaPosManagement.Api.Controllers
         public async Task<IActionResult> Add(int orderItemId, int quantity)
         {
             var result = await _service.AddQuantity(orderItemId, quantity);
+            return result.Match(
+                (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
+                Ok
+            );
+        }
+        [HttpPut("edit-order-item/{orderItemId}")]
+        public async Task<IActionResult> Update(int orderItemId, OrderItemRequest request)
+        {
+            var result = await _service.UpdateOrderItem(orderItemId, request);
             return result.Match(
                 (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
                 Ok

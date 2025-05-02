@@ -123,7 +123,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 var orderStatus = new Orderstatusupdate
                 {
                     OrderStatusUpdateId = statusId,
-                    OrderStatus = OrderConstant.PENDING,
+                    OrderStatus = OrderConstant.SUCCESS,
                     OrderId = orderId,
                     UpdatedAt = DateTime.Now,
                     //AccountId = orderRequest.StaffId
