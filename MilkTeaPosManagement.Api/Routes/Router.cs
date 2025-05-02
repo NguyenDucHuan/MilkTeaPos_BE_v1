@@ -42,6 +42,7 @@
             public const string UpdateExtra = $"{GetAll}/update-extra/{Id}";
             public const string UpdateCombo = $"{GetAll}/update-combo/{Id}";
             public const string Delete = $"{GetAll}/update-status/{Id}";
+            public const string UpdateImageProduct = $"{GetAll}/update-image";
 
         }
     }

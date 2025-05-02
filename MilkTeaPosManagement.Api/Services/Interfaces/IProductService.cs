@@ -15,5 +15,6 @@ namespace MilkTeaPosManagement.Api.Services.Interfaces
         Task<MethodResult<ProductResponse>> UpdateExtraProductAsync(int userId, UpdateExtraProductRequest request);
         Task<MethodResult<ProductResponse>> UpdateComboProductAsync(int userId, UpdateComboProductRequest request);
         Task<MethodResult<bool>> UpdateProductStatusAsync(int userId, int id);
+        Task<MethodResult<bool>> UpdateImageProductAsync(int productID, IFormFile? formFile);
     }
 }

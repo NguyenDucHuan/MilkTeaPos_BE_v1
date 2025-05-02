@@ -94,7 +94,7 @@ CREATE TABLE OrderItems (
 -- OrderStatusUpdates Table
 CREATE TABLE OrderStatusUpdates (
     OrderStatusUpdateId INT AUTO_INCREMENT PRIMARY KEY,
-    OrderStatus ENUM('Pending', 'Shipped', 'Delivered', 'Cancelled'),
+    OrderStatus ENUM('Pending', 'Shipped', 'Delivered','Success', 'Cancelled'),
     OrderId INT,
     AccountId INT,
     Updated_at DATETIME,
@@ -118,9 +118,9 @@ VALUES
 -- Insert sample data into Accounts Table with FullName
 INSERT INTO Accounts (Username, FullName, Password_hash, Email, ImageUrl, Phone, Role, Created_at, Updated_at, Status)
 VALUES 
-    ('john_doe', 'John Doe', '$2a$11$A46icdJigFN1XwpE2VFfs.bvFKBtF7go.zey13OZbEJ6yzu3JppHm', 'john@example.com', 'https://example.com/images/john.jpg', '1234567890', 'Manager', NOW(), NOW(), TRUE),
-    ('jane_smith', 'Jane Smith', '$2a$11$A46icdJigFN1XwpE2VFfs.bvFKBtF7go.zey13OZbEJ6yzu3JppHm', 'jane@example.com', 'https://example.com/images/jane.jpg', '9876543210', 'Staff', NOW(), NOW(), TRUE),
-    ('alice_brown', 'Alice Brown', '$2a$11$A46icdJigFN1XwpE2VFfs.bvFKBtF7go.zey13OZbEJ6yzu3JppHm', 'alice@example.com', 'https://example.com/images/alice.jpg', '5555555555', 'Staff', NOW(), NOW(), TRUE);
+    ('DucHuanADmin', 'John Doe', '$2a$11$A46icdJigFN1XwpE2VFfs.bvFKBtF7go.zey13OZbEJ6yzu3JppHm', 'Admin@example.com', 'https://example.com/images/john.jpg', '1234567890', 'Manager', NOW(), NOW(), TRUE),
+    ('DucHuanStaff', 'Jane Smith', '$2a$11$A46icdJigFN1XwpE2VFfs.bvFKBtF7go.zey13OZbEJ6yzu3JppHm', 'Staff@example.com', 'https://example.com/images/jane.jpg', '9876543210', 'Staff', NOW(), NOW(), TRUE),
+    ('DucHuanStaff2', 'Alice Brown', '$2a$11$A46icdJigFN1XwpE2VFfs.bvFKBtF7go.zey13OZbEJ6yzu3JppHm', 'Staff2@example.com', 'https://example.com/images/alice.jpg', '5555555555', 'Staff', NOW(), NOW(), TRUE);
 
 INSERT INTO Products (ProductName, CategoryId, Description, ImageURL, Prize, ProductType, ParentID, SizeId, Create_at, Create_by, Update_at, Update_by, Disable_at, Disable_by, Status)
 VALUES 

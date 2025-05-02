@@ -15,11 +15,9 @@ namespace MilkTeaPosManagement.Api.Models.ProductModel
         [StringLength(500)]
         public string? Description { get; set; }
 
-        public IFormFile? Image { get; set; }
-
+        //public IFormFile? Image { get; set; }
         public bool? Status { get; set; }
 
-       
 
     }
     public class UpdateSizeProductRequest
@@ -28,7 +26,7 @@ namespace MilkTeaPosManagement.Api.Models.ProductModel
         public string? SizeId { get; set; }
 
         public decimal? Prize { get; set; }
-        public IFormFile? Image { get; set; }
+        //public IFormFile? Image { get; set; }
         public bool? Status { get; set; }
     }
 }
