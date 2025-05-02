@@ -346,7 +346,6 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 );
             }
         }
-
         private async Task EnrichProductDetails(List<ProductResponse> products)
         {
             var masterProducts = products
@@ -431,7 +430,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 );
             }
         }
-        public async Task<MethodResult<ProductResponse>> UpdateMasterProductAsync(int userId, UpdateMasterProductRequest request , List<UpdateSizeProductRequest> Variants)
+        public async Task<MethodResult<ProductResponse>> UpdateMasterProductAsync(int userId, UpdateMasterProductRequest request, List<UpdateSizeProductRequest> Variants)
         {
             try
             {
@@ -477,20 +476,6 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     product.Status = request.Status;
                 }
 
-                if (request.Image != null)
-                {
-                    var imageUrl = await _cloudinaryService.UploadImageAsync(request.Image);
-
-                    if (string.IsNullOrEmpty(imageUrl))
-                    {
-                        return new MethodResult<ProductResponse>.Failure(
-                            "Failed to upload product image",
-                            StatusCodes.Status500InternalServerError
-                        );
-                    }
-
-                    product.ImageUrl = imageUrl;
-                }
                 product.UpdateAt = DateTime.Now;
                 product.UpdateBy = userId;
 
@@ -507,18 +492,18 @@ namespace MilkTeaPosManagement.Api.Services.Implements
 
                         if (sizeProduct != null)
                         {
-                            if (variant.Image != null)
-                            {
-                                var imageUrl = await _cloudinaryService.UploadImageAsync(variant.Image);
-                                if (string.IsNullOrEmpty(imageUrl))
-                                {
-                                    return new MethodResult<ProductResponse>.Failure(
-                                        "Failed to upload product image",
-                                        StatusCodes.Status500InternalServerError
-                                    );
-                                }
-                                sizeProduct.ImageUrl = imageUrl;
-                            }
+                            //if (variant.Image != null)
+                            //{
+                            //    var imageUrl = await _cloudinaryService.UploadImageAsync(variant.Image);
+                            //    if (string.IsNullOrEmpty(imageUrl))
+                            //    {
+                            //        return new MethodResult<ProductResponse>.Failure(
+                            //            "Failed to upload product image",
+                            //            StatusCodes.Status500InternalServerError
+                            //        );
+                            //    }
+                            //    sizeProduct.ImageUrl = imageUrl;
+                            //}
                             if (variant.Prize.HasValue)
                                 sizeProduct.Prize = variant.Prize;
 
@@ -537,18 +522,18 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         else
                         {
                             var imageUrl = product.ImageUrl;
-                            if (variant.Image != null)
-                            {
-                                var imageUrlu = await _cloudinaryService.UploadImageAsync(variant.Image);
-                                if (string.IsNullOrEmpty(imageUrl))
-                                {
-                                    return new MethodResult<ProductResponse>.Failure(
-                                        "Failed to upload product image",
-                                        StatusCodes.Status500InternalServerError
-                                    );
-                                }
-                                imageUrl = imageUrlu;
-                            }
+                            //if (variant.Image != null)
+                            //{
+                            //    var imageUrlu = await _cloudinaryService.UploadImageAsync(variant.Image);
+                            //    if (string.IsNullOrEmpty(imageUrl))
+                            //    {
+                            //        return new MethodResult<ProductResponse>.Failure(
+                            //            "Failed to upload product image",
+                            //            StatusCodes.Status500InternalServerError
+                            //        );
+                            //    }
+                            //    imageUrl = imageUrlu;
+                            //}
                             var newSizeProduct = new Product
                             {
                                 ProductName = product.ProductName,
@@ -588,7 +573,6 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             }
         }
 
-
         public async Task<MethodResult<ProductResponse>> UpdateExtraProductAsync(int userId, UpdateExtraProductRequest request)
         {
             try
@@ -619,20 +603,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
 
                     product.CategoryId = request.CategoryId;
                 }
-                if (request.Image != null)
-                {
-                    var imageUrl = await _cloudinaryService.UploadImageAsync(request.Image);
 
-                    if (string.IsNullOrEmpty(imageUrl))
-                    {
-                        return new MethodResult<ProductResponse>.Failure(
-                            "Failed to upload product image",
-                            StatusCodes.Status500InternalServerError
-                        );
-                    }
-
-                    product.ImageUrl = imageUrl;
-                }
                 if (!string.IsNullOrEmpty(request.ProductName))
                     product.ProductName = request.ProductName;
 
@@ -683,20 +654,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     );
                 }
                 await _uow.BeginTransactionAsync();
-                if (request.Image != null)
-                {
-                    var imageUrl = await _cloudinaryService.UploadImageAsync(request.Image);
 
-                    if (string.IsNullOrEmpty(imageUrl))
-                    {
-                        return new MethodResult<ProductResponse>.Failure(
-                            "Failed to upload product image",
-                            StatusCodes.Status500InternalServerError
-                        );
-                    }
-
-                    product.ImageUrl = imageUrl;
-                }
                 if (!string.IsNullOrEmpty(request.ProductName))
                     product.ProductName = request.ProductName;
 
@@ -802,6 +760,47 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     StatusCodes.Status500InternalServerError
                 );
             }
+        }
+        public async Task<MethodResult<bool>> UpdateImageProductAsync(int productID, IFormFile? formFile)
+        {
+            try
+            {
+                var product = await _uow.GetRepository<Product>().SingleOrDefaultAsync(
+                predicate: p => p.ProductId == productID
+                );
+                if (product == null)
+                {
+                    return new MethodResult<bool>.Failure(
+                        "Product not found",
+                        StatusCodes.Status404NotFound
+                    );
+                }
+                if (formFile != null)
+                {
+                    var imageUrl = await _cloudinaryService.UploadImageAsync(formFile);
+                    if (string.IsNullOrEmpty(imageUrl))
+                    {
+                        return new MethodResult<bool>.Failure(
+                            "Failed to upload product image",
+                            StatusCodes.Status500InternalServerError
+                        );
+                    }
+                    product.ImageUrl = imageUrl;
+                }
+                product.UpdateAt = DateTime.Now;
+                product.UpdateBy = product.UpdateBy;
+                _uow.GetRepository<Product>().UpdateAsync(product);
+                await _uow.CommitAsync();
+                return new MethodResult<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                return new MethodResult<bool>.Failure(
+                    $"Error updating product image: {ex.Message}",
+                    StatusCodes.Status500InternalServerError
+                );
+            }
+
         }
     }
 

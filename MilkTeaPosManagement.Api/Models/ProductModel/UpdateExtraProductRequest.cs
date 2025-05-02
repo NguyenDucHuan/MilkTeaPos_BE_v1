@@ -15,7 +15,7 @@ namespace MilkTeaPosManagement.Api.Models.ProductModel
         [StringLength(500)]
         public string? Description { get; set; }
 
-        public IFormFile? Image { get; set; }
+        //public IFormFile? Image { get; set; }
 
         public decimal? Prize { get; set; }
 

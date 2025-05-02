@@ -120,7 +120,7 @@ namespace MilkTeaPosManagement.Api.Controllers
         [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
         [HttpPut]
         [Route(Router.ProductRoute.UpdateMaster)]
-        public async Task<IActionResult> UpdateMasterProduct([FromForm] UpdateMasterProductRequest request, List<UpdateSizeProductRequest> Variants)
+        public async Task<IActionResult> UpdateMasterProduct(UpdateMasterProductRequest request, List<UpdateSizeProductRequest> Variants)
         {
             var userIdString = User.FindFirst(ClaimTypes.Sid)?.Value;
             if (!int.TryParse(userIdString, out var userId))
@@ -128,7 +128,7 @@ namespace MilkTeaPosManagement.Api.Controllers
                 return BadRequest("Invalid user ID.");
             }
 
-            var result = await _productService.UpdateMasterProductAsync(userId, request , Variants);
+            var result = await _productService.UpdateMasterProductAsync(userId, request, Variants);
 
             return result.Match(
                 (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
@@ -142,7 +142,7 @@ namespace MilkTeaPosManagement.Api.Controllers
         [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
         [HttpPut]
         [Route(Router.ProductRoute.UpdateExtra)]
-        public async Task<IActionResult> UpdateExtraProduct([FromForm] UpdateExtraProductRequest request)
+        public async Task<IActionResult> UpdateExtraProduct(UpdateExtraProductRequest request)
         {
             var userIdString = User.FindFirst(ClaimTypes.Sid)?.Value;
             if (!int.TryParse(userIdString, out var userId))
@@ -165,7 +165,7 @@ namespace MilkTeaPosManagement.Api.Controllers
         [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
         [HttpPut]
         [Route(Router.ProductRoute.UpdateCombo)]
-        public async Task<IActionResult> UpdateComboProduct([FromForm] UpdateComboProductRequest request)
+        public async Task<IActionResult> UpdateComboProduct(UpdateComboProductRequest request)
         {
             var userIdString = User.FindFirst(ClaimTypes.Sid)?.Value;
             if (!int.TryParse(userIdString, out var userId))
@@ -204,5 +204,21 @@ namespace MilkTeaPosManagement.Api.Controllers
                 })
             );
         }
+        [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
+        [HttpPut]
+        [Route(Router.ProductRoute.UpdateImageProduct)]
+        public async Task<IActionResult> UpdateImageProduct(int productID, IFormFile? formFile)
+        {
+            var result = await _productService.UpdateImageProductAsync(productID, formFile);
+            return result.Match(
+                (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
+                product => Ok(new
+                {
+                    message = "Product image updated successfully",
+                    data = product
+                })
+            );
+        }
+
     }
 }
