@@ -14,19 +14,49 @@ namespace MilkTeaPosManagement.Api.Services.Implements
     public class OrderService(IUnitOfWork uow, IHttpContextAccessor _httpContextAccessor) : IOrderService
     {
         private readonly IUnitOfWork _uow = uow;
-        public async Task<IPaginate<Order>> GetAllOrders(OrderSearchModel? search)
+        public async Task<(long, IPaginate<Order>?, string?)> GetAllOrders(OrderSearchModel? search)
         {
-            if (search == null || (search != null && search.PaymentMethodId == null && search.StaffId == null))
+            if (search == null)
             {
-                return await _uow.GetRepository<Order>().GetPagingListAsync(orderBy: o => o.OrderByDescending(od => od.CreateAt));
-            } else if (search.StaffId == null && search.PaymentMethodId != null)
-            {
-                return await _uow.GetRepository<Order>().GetPagingListAsync(orderBy: o => o.OrderByDescending(od => od.CreateAt), predicate: o => o.PaymentMethodId == search.PaymentMethodId);
-            } else if (search.StaffId != null && search.PaymentMethodId == null)
-            {
-                return await _uow.GetRepository<Order>().GetPagingListAsync(orderBy: o => o.OrderByDescending(od => od.CreateAt), predicate: o => o.StaffId == search.StaffId);
+                return (1, await _uow.GetRepository<Order>().GetPagingListAsync(page: 1, size: 10, orderBy: o => o.OrderByDescending(od => od.CreateAt)), null);
             }
-            return await _uow.GetRepository<Order>().GetPagingListAsync(orderBy: o => o.OrderByDescending(od => od.CreateAt), predicate: o => o.StaffId == search.StaffId && o.PaymentMethodId == search.PaymentMethodId);
+            if (search.Status != null && search.Status != OrderConstant.PENDING && search.Status != OrderConstant.SHIPPED && search.Status != OrderConstant.DELIVERED && search.Status != OrderConstant.CANCELED)
+            {
+                return (0, null, "Status must be in [PENDING, SHIPPED, DELIVERED, CANCELED]");
+            }
+            var staff = await _uow.GetRepository<Account>().SingleOrDefaultAsync(predicate: acc => acc.AccountId == search.StaffId);
+            if (search.StaffId != null && staff == null)
+            {
+                return (0, null, "Staff not found");
+            }
+            var payment = await _uow.GetRepository<Paymentmethod>().SingleOrDefaultAsync(predicate: pm => pm.PaymentMethodId == search.PaymentMethodId);
+            if (search.PaymentMethodId != null && payment == null)
+            {
+                return (0, null, "Payment method not found");
+            }
+            return (1, await _uow.GetRepository<Order>().GetPagingListAsync(include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff).Include(od => od.PaymentMethod),
+                                                                        predicate: o => (!search.StaffId.HasValue || o.StaffId == search.StaffId) &&
+                                                                                        (!search.PaymentMethodId.HasValue || o.PaymentMethodId == search.PaymentMethodId) &&
+                                                                                        (!search.FromDate.HasValue || o.CreateAt.Value.Date >= search.FromDate.Value.Date) &&
+                                                                                        (!search.ToDate.HasValue || o.CreateAt.Value.Date <= search.ToDate.Value.Date) &&
+                                                                                        (!search.MinPrice.HasValue || o.TotalAmount >= search.MinPrice) &&
+                                                                                        (!search.MaxPrice.HasValue || o.TotalAmount >= search.MaxPrice) &&
+                                                                                        (string.IsNullOrEmpty(search.Status) || o.Orderstatusupdates.FirstOrDefault().OrderStatus.ToLower().Equals(search.Status.ToLower())),
+                                                                        page: search.Page.HasValue ? (int)search.Page : 1,
+                                                                        size: search.PageSize.HasValue ? (int)search.PageSize : 10,
+                                                                        orderBy: o => ((search.SortAscending.HasValue && search.SortAscending.Value) ? ((string.IsNullOrEmpty(search.SortBy) || search.SortBy.ToLower().Equals("createat")) ? o.OrderBy(od => od.CreateAt)
+                                                                                                                                                                                                                                            : search.SortBy.ToLower().Equals("orderid") ? o.OrderBy(od => od.OrderId)
+                                                                                                                                                                                                                                            : search.SortBy.ToLower().Equals("totalamount") ? o.OrderBy(od => od.TotalAmount)
+                                                                                                                                                                                                                                            : search.SortBy.ToLower().Equals("staffid") ? o.OrderBy(od => od.StaffId)
+                                                                                                                                                                                                                                            : search.SortBy.ToLower().Equals("paymentmethodid") ? o.OrderBy(od => od.PaymentMethodId)
+                                                                                                                                                                                                                                                                                                : o.OrderBy(od => od.Orderstatusupdates.FirstOrDefault().OrderStatus))
+                                                                                                                                                     : ((string.IsNullOrEmpty(search.SortBy) || search.SortBy.ToLower().Equals("createat")) ? o.OrderByDescending(od => od.CreateAt)
+                                                                                                                                                                                                                                            : search.SortBy.ToLower().Equals("orderid") ? o.OrderByDescending(od => od.OrderId)
+                                                                                                                                                                                                                                            : search.SortBy.ToLower().Equals("totalamount") ? o.OrderByDescending(od => od.TotalAmount)
+                                                                                                                                                                                                                                            : search.SortBy.ToLower().Equals("staffid") ? o.OrderByDescending(od => od.StaffId)
+                                                                                                                                                                                                                                            : search.SortBy.ToLower().Equals("paymentmethodid") ? o.OrderByDescending(od => od.PaymentMethodId)
+                                                                                                                                                                                                                                                                                                : o.OrderByDescending(od => od.Orderstatusupdates.FirstOrDefault().OrderStatus)))
+                                                                        ), null); 
         }
         //public async Task<IPaginate<Order>> GetOrdersByStaffId(int staffId)
         //{
@@ -36,15 +66,14 @@ namespace MilkTeaPosManagement.Api.Services.Implements
         //{
         //    return await _uow.GetRepository<Order>().GetPagingListAsync(orderBy: o => o.OrderByDescending(od => od.CreateAt), predicate: o => o.PaymentMethodId == methodId);
         //}
-        public async Task<MethodResult<Order>> GetOrderDetail(int orderId)
+        public async Task<(long, Order?, string?)> GetOrderDetail(int orderId)
         {
-            var order = await _uow.GetRepository<Order>().SingleOrDefaultAsync(
-                predicate: o => o.OrderId == orderId, include: o => o.Include(od => od.PaymentMethod).Include(od => od.Orderstatusupdates).Include(od => od.Orderitems).ThenInclude(oi => oi.Product));
+            var order = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == orderId, include: o => o.Include(od => od.PaymentMethod).Include(od => od.Orderstatusupdates).Include(od => od.Staff).Include(od => od.Orderitems).ThenInclude(oi => oi.Product));
             if (order == null)
             {
-                return new MethodResult<Order>.Failure("Order not found!", StatusCodes.Status400BadRequest);
+                return (400, null, "Order not found!");
             }
-            return new MethodResult<Order>.Success(order);
+            return (200, order, null);
         }
         public async Task<MethodResult<Order>> CreateOrder(OrderRequest orderRequest)
         {
@@ -54,11 +83,11 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 return new MethodResult<Order>.Failure("Order not have any product!", StatusCodes.Status400BadRequest);
             }
-            //var account = await GetCurrentUser();
-            //if (account == null)
-            //{
-            //    return new MethodResult<Order>.Failure("Login required!", StatusCodes.Status400BadRequest);
-            //}
+            var account = await GetCurrentUser();
+            if (account == null)
+            {
+                return new MethodResult<Order>.Failure("Login required!", StatusCodes.Status400BadRequest);
+            }
             foreach (var item in orderItems)
             {
                 totalAmount += item.Price;
@@ -71,7 +100,8 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 TotalAmount = totalAmount,
                 CreateAt = DateTime.Now,
                 Note = orderRequest.Note,
-                StaffId = orderRequest.StaffId,
+                //StaffId = orderRequest.StaffId,
+                StaffId = account.AccountId,
                 PaymentMethodId = orderRequest.PaymentMethodId
             };
             
@@ -93,10 +123,11 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 var orderStatus = new Orderstatusupdate
                 {
                     OrderStatusUpdateId = statusId,
-                    OrderStatus = "Pending",
+                    OrderStatus = OrderConstant.PENDING,
                     OrderId = orderId,
                     UpdatedAt = DateTime.Now,
-                    AccountId = orderRequest.StaffId
+                    //AccountId = orderRequest.StaffId
+                    AccountId = account.AccountId,
                 };
                 await _uow.GetRepository<Orderstatusupdate>().InsertAsync(orderStatus);
                 if (await _uow.CommitAsync() > 0)
@@ -120,7 +151,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 return new MethodResult<Order>.Failure("Order delivered can not be canceled!", StatusCodes.Status400BadRequest);
             }
-            orderStatus.OrderStatus = "Cancelled";
+            orderStatus.OrderStatus = OrderConstant.CANCELED;
             _uow.GetRepository<Orderstatusupdate>().UpdateAsync(orderStatus);
             if (await _uow.CommitAsync() > 0)
             {
@@ -141,7 +172,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 return new MethodResult<Order>.Failure("Order canceled can not be delivered!", StatusCodes.Status400BadRequest);
             }
-            orderStatus.OrderStatus = "Delivered";
+            orderStatus.OrderStatus = OrderConstant.DELIVERED;
             _uow.GetRepository<Orderstatusupdate>().UpdateAsync(orderStatus);
             if (await _uow.CommitAsync() > 0)
             {

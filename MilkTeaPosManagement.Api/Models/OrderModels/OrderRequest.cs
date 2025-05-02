@@ -7,6 +7,6 @@ namespace MilkTeaPosManagement.Api.Models.OrderModels
         public string? Note { get; set; }
         [Required(ErrorMessage = "Payment method ID is required")]
         public int PaymentMethodId { get; set; }
-        public int StaffId { get; set; }
+        //public int StaffId { get; set; }
     }
 }
