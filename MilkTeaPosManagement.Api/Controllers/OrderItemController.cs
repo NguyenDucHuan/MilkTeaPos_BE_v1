@@ -9,6 +9,7 @@ namespace MilkTeaPosManagement.Api.Controllers
 {
     [Route("api/order-item")]
     [ApiController]
+    [Authorize]
     public class OrderItemController(IOrderItemService service) : ControllerBase
     {
         private readonly IOrderItemService _service = service;
@@ -32,7 +33,7 @@ namespace MilkTeaPosManagement.Api.Controllers
                             toppingName = topping.Product.ProductName,
                             toppingPrize = topping.Product.Prize,
                         });
-                        toppingPrice += topping.Price;
+                        toppingPrice += topping.Product.Prize;
                     }
                     cartResponse.Add(new
                     {
@@ -42,7 +43,7 @@ namespace MilkTeaPosManagement.Api.Controllers
                         sizeId = item.Product.SizeId,
                         prize = item.Product.Prize,
                         quantity = item.Quantity,
-                        subPrice = item.Price + toppingPrice,
+                        subPrice = item.Product.Prize + toppingPrice,
                         toppings = toppingOfProduct
                     });
                 }
@@ -60,7 +61,35 @@ namespace MilkTeaPosManagement.Api.Controllers
         public async Task<IActionResult> GetByOrderId([FromRoute] int orderId)
         {
             var result = await _service.GetOrderitemsByOrderIdAsync(orderId);
-            return Ok(result);
+            var cartResponse = new List<object>();
+            foreach (var item in result)
+            {
+                var toppings = await _service.GetToppingsInOrder(orderId, item.OrderItemId);
+                var toppingOfProduct = new List<object>();
+                decimal? toppingPrice = 0;
+                foreach (var topping in toppings)
+                {
+                    toppingOfProduct.Add(new
+                    {
+                        toppingId = topping.ProductId,
+                        toppingName = topping.Product.ProductName,
+                        toppingPrize = topping.Product.Prize,
+                    });
+                    toppingPrice += topping.Product.Prize;
+                }
+                cartResponse.Add(new
+                {
+                    orderItemId = item.OrderItemId,
+                    productId = item.ProductId,
+                    productName = item.Product.ProductName,
+                    sizeId = item.Product.SizeId,
+                    prize = item.Product.Prize,
+                    quantity = item.Quantity,
+                    subPrice = item.Product.Prize + toppingPrice,
+                    toppings = toppingOfProduct
+                });
+            }
+            return Ok(cartResponse);
         }
         [HttpPost("apply-combo")]
         public async Task<IActionResult> ChangeProductsToCombo([FromBody] int comboId)

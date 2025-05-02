@@ -82,7 +82,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
         }
         public async Task<ICollection<Orderitem>> GetOrderitemsByOrderIdAsync(int orderId)
         {
-            return await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.OrderId != null && oi.OrderId == orderId, include: oi => oi.Include(i => i.Product));
+            return await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.MasterId == null && oi.OrderId == orderId, include: oi => oi.Include(i => i.Product));
         }
         public async Task<Orderitem> GetAnOrderItemByIdAsync(int id)
         {
@@ -266,6 +266,11 @@ namespace MilkTeaPosManagement.Api.Services.Implements
         public async Task<ICollection<Orderitem>> GetToppingsInCart(int masterId)
         {
             var toppings = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.OrderId == null && oi.MasterId == masterId, include: oi => oi.Include(i => i.Product));
+            return toppings;
+        }
+        public async Task<ICollection<Orderitem>> GetToppingsInOrder(int orderId, int masterId)
+        {
+            var toppings = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.OrderId == orderId && oi.MasterId == masterId, include: oi => oi.Include(i => i.Product));
             return toppings;
         }
     }
