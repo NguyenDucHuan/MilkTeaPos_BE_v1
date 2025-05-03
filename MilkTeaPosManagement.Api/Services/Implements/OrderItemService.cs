@@ -252,9 +252,16 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 foreach (var item in toppings)
                 {
                     var basePrice = item.Price/item.Quantity;
-                    item.Quantity -= quantity;
-                    item.Price -= basePrice * quantity;
-                    _uow.GetRepository<Orderitem>().UpdateAsync(item);
+                    if (item.Quantity > quantity)
+                    {
+                        item.Quantity -= quantity;
+                        item.Price -= basePrice * quantity;
+                        _uow.GetRepository<Orderitem>().UpdateAsync(item);
+                    }
+                    else
+                    {
+                        _uow.GetRepository<Orderitem>().DeleteAsync(item);
+                    }
                 }
                 if (await _uow.CommitAsync() > 0)
                 {

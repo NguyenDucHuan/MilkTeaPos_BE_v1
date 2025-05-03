@@ -81,6 +81,8 @@ namespace MilkTeaPosManagement.Api.Controllers
             {
                 var toppings = await _service.GetToppingsInOrder(orderId, item.OrderItemId);
                 var toppingOfProduct = new List<object>();
+                var comboItems = await _service.GetComboItemsInCart(item.OrderItemId);
+                var itemsOfProduct = new List<object>();
                 decimal? toppingPrice = 0;
                 foreach (var topping in toppings)
                 {
@@ -92,6 +94,15 @@ namespace MilkTeaPosManagement.Api.Controllers
                     });
                     toppingPrice += topping.Product?.Prize;
                 }
+                foreach (var comboItem in comboItems)
+                {
+                    itemsOfProduct.Add(new
+                    {
+                        comboItenId = comboItem.ProductId,
+                        comboItemName = comboItem.Product?.ProductName
+                    });
+                }
+                var parent = _service.GetProductByIdAsync(item.Product.ParentId.HasValue ? (int)item.Product.ParentId : 1);
                 cartResponse.Add(new
                 {
                     orderItemId = item.OrderItemId,
@@ -100,8 +111,10 @@ namespace MilkTeaPosManagement.Api.Controllers
                     sizeId = item.Product?.SizeId,
                     prize = item.Product?.Prize,
                     quantity = item.Quantity,
-                    subPrice = item.Product?.Prize + toppingPrice,
-                    toppings = toppingOfProduct
+                    subPrice = item.Price + toppingPrice,
+                    toppings = toppingOfProduct,
+                    comboItems = itemsOfProduct,
+                    productParent = parent.Result
                 });
             }
             return Ok(cartResponse);
@@ -119,7 +132,44 @@ namespace MilkTeaPosManagement.Api.Controllers
         public async Task<IActionResult> GetById([FromRoute]int orderItemId)
         {
             var result = await _service.GetAnOrderItemByIdAsync(orderItemId);
-            return Ok(result);
+            var toppings = await _service.GetToppingsInCart(result.OrderItemId);
+            var toppingOfProduct = new List<object>();
+
+            var comboItems = await _service.GetComboItemsInCart(result.OrderItemId);
+            var itemsOfProduct = new List<object>();
+            decimal? toppingPrice = 0;
+            foreach (var topping in toppings)
+            {
+                toppingOfProduct.Add(new
+                {
+                    toppingId = topping.ProductId,
+                    toppingName = topping.Product?.ProductName,
+                    toppingPrize = topping.Product?.Prize,
+                });
+                toppingPrice += topping.Price;
+            }
+            foreach (var comboItem in comboItems)
+            {
+                itemsOfProduct.Add(new
+                {
+                    comboItenId = comboItem.ProductId,
+                    comboItemName = comboItem.Product?.ProductName
+                });
+            }
+            var parent = _service.GetProductByIdAsync(result.Product.ParentId.HasValue ? (int)result.Product.ParentId : 1);
+            return Ok(new
+            {
+                orderItemId = result.OrderItemId,
+                productId = result.ProductId,
+                productName = result.Product?.ProductName,
+                sizeId = result.Product?.SizeId,
+                prize = result.Product?.Prize,
+                quantity = result.Quantity,
+                subPrice = result.Price + toppingPrice,
+                toppings = toppingOfProduct,
+                comboItems = itemsOfProduct,
+                productParent = parent.Result
+            });
         }
         [HttpPost("add-to-cart")]
         public async Task<IActionResult> Add([FromBody] OrderItemRequest request)
