@@ -405,7 +405,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
         {
             var result = await _productService.GetProductByIdAsync(id);
             return result.Match(
-                (errorMessage, statusCode) => null!,
+                (errorMessage, statusCode) => new ProductResponse(),
                 product => product
             );
         }
