@@ -34,7 +34,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 return (0, null, "Payment method not found");
             }
-            return (1, await _uow.GetRepository<Order>().GetPagingListAsync(include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff).Include(od => od.PaymentMethod),
+            return (1, await _uow.GetRepository<Order>().GetPagingListAsync(include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff).Include(od => od.PaymentMethod).Include(od => od.Orderitems),
                                                                         predicate: o => (!search.StaffId.HasValue || o.StaffId == search.StaffId) &&
                                                                                         (!search.PaymentMethodId.HasValue || o.PaymentMethodId == search.PaymentMethodId) &&
                                                                                         (!search.FromDate.HasValue || o.CreateAt.Value.Date >= search.FromDate.Value.Date) &&

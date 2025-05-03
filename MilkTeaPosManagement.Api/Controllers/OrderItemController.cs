@@ -24,6 +24,9 @@ namespace MilkTeaPosManagement.Api.Controllers
                 {
                     var toppings = await _service.GetToppingsInCart(item.OrderItemId);
                     var toppingOfProduct = new List<object>();
+                    
+                    var comboItems = await _service.GetComboItemsInCart(item.OrderItemId);
+                    var itemsOfProduct = new List<object>();
                     decimal? toppingPrice = 0;
                     foreach (var topping in toppings)
                     {
@@ -33,7 +36,15 @@ namespace MilkTeaPosManagement.Api.Controllers
                             toppingName = topping.Product.ProductName,
                             toppingPrize = topping.Product.Prize,
                         });
-                        toppingPrice += topping.Product.Prize;
+                        toppingPrice += topping.Price;
+                    }
+                    foreach (var comboItem in comboItems)
+                    {
+                        itemsOfProduct.Add(new
+                        {
+                            comboItenId = comboItem.ProductId,
+                            comboItemName = comboItem.Product.ProductName
+                        });
                     }
                     cartResponse.Add(new
                     {
@@ -43,8 +54,9 @@ namespace MilkTeaPosManagement.Api.Controllers
                         sizeId = item.Product.SizeId,
                         prize = item.Product.Prize,
                         quantity = item.Quantity,
-                        subPrice = item.Product.Prize + toppingPrice,
-                        toppings = toppingOfProduct
+                        subPrice = item.Price + toppingPrice,
+                        toppings = toppingOfProduct,
+                        comboItems = itemsOfProduct
                     });
                 }
                 return Ok(new

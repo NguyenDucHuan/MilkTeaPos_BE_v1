@@ -11,7 +11,7 @@ namespace MilkTeaPosManagement.Api.Controllers
 {
     [Route("api/order")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class OrderController(IOrderService service, IOrderItemService orderItemService) : ControllerBase
     {
         private readonly IOrderService _service = service;
@@ -24,31 +24,31 @@ namespace MilkTeaPosManagement.Api.Controllers
             {
                 return BadRequest(result.Item3);
             }
-            //var orderList = new List<object>();
-            //foreach (var item in result.Item2.Items)
-            //{
-            //    orderList.Add(new
-            //    {
-            //        orderId = item.OrderId,
-            //        createAt = item.CreateAt,
-            //        totalAmount = item.TotalAmount,
-            //        note = item.Note,
-            //        staffId = item.StaffId,
-            //        staffName = item.Staff.FullName,
-            //        paymentMethodId = item.PaymentMethodId,
-            //        paymentMethodName = item.PaymentMethod.MethodName,
-            //        orderStatus = item.Orderstatusupdates.FirstOrDefault().OrderStatus
-            //    });
-            //}
-            //return Ok(new
-            //{
-            //    size = result.Item2.Size,
-            //    page = result.Item2.Page,
-            //    total = result.Item2.Total,
-            //    totalPages = result.Item2.TotalPages,
-            //    items = orderList
-            //});
-            return Ok(result.Item2);
+            var orderList = new List<object>();
+            foreach (var item in result.Item2.Items)
+            {
+                orderList.Add(new
+                {
+                    orderId = item.OrderId,
+                    createAt = item.CreateAt,
+                    totalAmount = item.TotalAmount,
+                    note = item.Note,
+                    staffId = item.StaffId,
+                    staffName = item.Staff.FullName,
+                    paymentMethodId = item.PaymentMethodId,
+                    paymentMethodName = item.PaymentMethod.MethodName,
+                    orderStatus = item.Orderstatusupdates.FirstOrDefault().OrderStatus
+                });
+            }
+            return Ok(new
+            {
+                size = result.Item2.Size,
+                page = result.Item2.Page,
+                total = result.Item2.Total,
+                totalPages = result.Item2.TotalPages,
+                items = orderList
+            });
+            //return Ok(result.Item2);
         }
         [HttpGet("get-by-id/{orderId}")]
         public async Task<IActionResult> Get([FromRoute]int orderId)

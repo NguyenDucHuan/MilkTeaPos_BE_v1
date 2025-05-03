@@ -306,7 +306,12 @@ namespace MilkTeaPosManagement.Api.Services.Implements
         }
         public async Task<ICollection<Orderitem>> GetToppingsInCart(int masterId)
         {
-            var toppings = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.OrderId == null && oi.MasterId == masterId, include: oi => oi.Include(i => i.Product));
+            var toppings = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.OrderId == null && oi.MasterId == masterId && oi.Price > 0, include: oi => oi.Include(i => i.Product));
+            return toppings;
+        }
+        public async Task<ICollection<Orderitem>> GetComboItemsInCart(int masterId)
+        {
+            var toppings = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.OrderId == null && oi.MasterId == masterId && oi.Price == 0, include: oi => oi.Include(i => i.Product));
             return toppings;
         }
         public async Task<ICollection<Orderitem>> GetToppingsInOrder(int orderId, int masterId)
