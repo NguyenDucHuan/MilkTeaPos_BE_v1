@@ -18,6 +18,6 @@ namespace MilkTeaPosManagement.Api.Services.Interfaces
         Task<ICollection<Orderitem>> GetToppingsInOrder(int orderId, int masterId);
         Task<MethodResult<Orderitem>> UpdateOrderItem(int id, OrderItemRequest request);
         Task<ICollection<Orderitem>> GetComboItemsInCart(int masterId);
-        Task<ProductResponse?> GetProductByIdAsync(int id);
+        Task<ProductResponse> GetProductByIdAsync(int id);
     }
 }

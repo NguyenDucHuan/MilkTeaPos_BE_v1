@@ -401,7 +401,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             }
             return new MethodResult<Orderitem>.Success(existed);
         }
-        public async Task<ProductResponse?> GetProductByIdAsync(int id)
+        public async Task<ProductResponse> GetProductByIdAsync(int id)
         {
             var result = await _productService.GetProductByIdAsync(id);
             return result.Match(

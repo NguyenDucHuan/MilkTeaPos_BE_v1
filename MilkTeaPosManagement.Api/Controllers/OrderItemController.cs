@@ -34,8 +34,8 @@ namespace MilkTeaPosManagement.Api.Controllers
                         toppingOfProduct.Add(new
                         {
                             toppingId = topping.ProductId,
-                            toppingName = topping.Product.ProductName,
-                            toppingPrize = topping.Product.Prize,
+                            toppingName = topping.Product?.ProductName,
+                            toppingPrize = topping.Product?.Prize,
                         });
                         toppingPrice += topping.Price;
                     }
@@ -44,17 +44,17 @@ namespace MilkTeaPosManagement.Api.Controllers
                         itemsOfProduct.Add(new
                         {
                             comboItenId = comboItem.ProductId,
-                            comboItemName = comboItem.Product.ProductName
+                            comboItemName = comboItem.Product?.ProductName
                         });
                     }
-                    var parent = _service.GetProductByIdAsync((int)item.Product.ParentId);
+                    var parent = _service.GetProductByIdAsync(item.Product.ParentId.HasValue ? (int)item.Product.ParentId : 1);
                     cartResponse.Add(new
                     {
                         orderItemId = item.OrderItemId,
                         productId = item.ProductId,
-                        productName = item.Product.ProductName,
-                        sizeId = item.Product.SizeId,
-                        prize = item.Product.Prize,
+                        productName = item.Product?.ProductName,
+                        sizeId = item.Product?.SizeId,
+                        prize = item.Product?.Prize,
                         quantity = item.Quantity,
                         subPrice = item.Price + toppingPrice,
                         toppings = toppingOfProduct,
@@ -87,20 +87,20 @@ namespace MilkTeaPosManagement.Api.Controllers
                     toppingOfProduct.Add(new
                     {
                         toppingId = topping.ProductId,
-                        toppingName = topping.Product.ProductName,
-                        toppingPrize = topping.Product.Prize,
+                        toppingName = topping.Product?.ProductName,
+                        toppingPrize = topping.Product?.Prize,
                     });
-                    toppingPrice += topping.Product.Prize;
+                    toppingPrice += topping.Product?.Prize;
                 }
                 cartResponse.Add(new
                 {
                     orderItemId = item.OrderItemId,
                     productId = item.ProductId,
-                    productName = item.Product.ProductName,
-                    sizeId = item.Product.SizeId,
-                    prize = item.Product.Prize,
+                    productName = item.Product?.ProductName,
+                    sizeId = item.Product?.SizeId,
+                    prize = item.Product?.Prize,
                     quantity = item.Quantity,
-                    subPrice = item.Product.Prize + toppingPrice,
+                    subPrice = item.Product?.Prize + toppingPrice,
                     toppings = toppingOfProduct
                 });
             }
