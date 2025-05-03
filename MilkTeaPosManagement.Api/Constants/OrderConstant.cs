@@ -1,12 +1,12 @@
 ﻿namespace MilkTeaPosManagement.Api.Constants
 {
-    public class OrderConstant
+    public enum OrderConstant
     {
 
-        public const string PENDING = "Pending";
-        public const string SHIPPED = "Shipped";
-        public const string DELIVERED = "Delivered";
-        public const string CANCELED = "Cancelled";
-        public const string SUCCESS = "Success";
+        PENDING = 0,
+        SHIPPED = 1,
+        DELIVERED = 2,
+        SUCCESS = 3,
+        CANCELED =4
     }
 }

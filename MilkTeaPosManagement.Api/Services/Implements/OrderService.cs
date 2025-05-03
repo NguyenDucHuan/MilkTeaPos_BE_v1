@@ -20,10 +20,10 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 return (1, await _uow.GetRepository<Order>().GetPagingListAsync(page: 1, size: 10, orderBy: o => o.OrderByDescending(od => od.CreateAt)), null);
             }
-            if (search.Status != null && search.Status != OrderConstant.PENDING && search.Status != OrderConstant.SHIPPED && search.Status != OrderConstant.DELIVERED && search.Status != OrderConstant.CANCELED)
-            {
-                return (0, null, "Status must be in [PENDING, SHIPPED, DELIVERED, CANCELED]");
-            }
+            //if (search.Status != null && search.Status != OrderConstant.PENDING && search.Status != OrderConstant.SHIPPED && search.Status != OrderConstant.DELIVERED && search.Status != OrderConstant.CANCELED)
+            //{
+            //    return (0, null, "Status must be in [PENDING, SHIPPED, DELIVERED, CANCELED]");
+            //}
             var staff = await _uow.GetRepository<Account>().SingleOrDefaultAsync(predicate: acc => acc.AccountId == search.StaffId);
             if (search.StaffId != null && staff == null)
             {
@@ -79,11 +79,22 @@ namespace MilkTeaPosManagement.Api.Services.Implements
         {
             var orderItems = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.OrderId == null);
             decimal? totalAmount = 0;
-            if (orderItems == null && orderItems.Count == 0)
+            if (orderItems == null || orderItems?.Count == 0)
             {
                 return new MethodResult<Order>.Failure("Order not have any product!", StatusCodes.Status400BadRequest);
             }
-            var account = await GetCurrentUser();
+            var account = await _uow.GetRepository<Account>().SingleOrDefaultAsync(predicate: a => a.AccountId == orderRequest.StaffId);
+            
+            //var account = await GetCurrentUser();
+            //if (account == null)
+            //{
+            //    return new MethodResult<Order>.Failure("Login required!", StatusCodes.Status400BadRequest);
+            //}
+            var paymrentmethod = await _uow.GetRepository<Paymentmethod>().SingleOrDefaultAsync(predicate: PM => PM.PaymentMethodId == orderRequest.PaymentMethodId);
+            if (paymrentmethod == null)
+            {
+                return new MethodResult<Order>.Failure("Paymentmethod not valid!", StatusCodes.Status400BadRequest);
+            }
             if (account == null)
             {
                 return new MethodResult<Order>.Failure("Login required!", StatusCodes.Status400BadRequest);
@@ -100,8 +111,8 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 TotalAmount = totalAmount,
                 CreateAt = DateTime.Now,
                 Note = orderRequest.Note,
-                //StaffId = orderRequest.StaffId,
-                StaffId = account.AccountId,
+                StaffId = orderRequest.StaffId,
+                //StaffId = account.AccountId,
                 PaymentMethodId = orderRequest.PaymentMethodId
             };
             
@@ -123,11 +134,11 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 var orderStatus = new Orderstatusupdate
                 {
                     OrderStatusUpdateId = statusId,
-                    OrderStatus = OrderConstant.SUCCESS,
+                    OrderStatus = OrderConstant.SUCCESS.ToString(),
                     OrderId = orderId,
                     UpdatedAt = DateTime.Now,
-                    //AccountId = orderRequest.StaffId
-                    AccountId = account.AccountId,
+                    //AccountId = account.AccountId
+                    AccountId = orderRequest.StaffId,
                 };
                 await _uow.GetRepository<Orderstatusupdate>().InsertAsync(orderStatus);
                 if (await _uow.CommitAsync() > 0)
@@ -151,7 +162,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 return new MethodResult<Order>.Failure("Order delivered can not be canceled!", StatusCodes.Status400BadRequest);
             }
-            orderStatus.OrderStatus = OrderConstant.CANCELED;
+            orderStatus.OrderStatus = OrderConstant.CANCELED.ToString();
             _uow.GetRepository<Orderstatusupdate>().UpdateAsync(orderStatus);
             if (await _uow.CommitAsync() > 0)
             {
@@ -172,7 +183,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 return new MethodResult<Order>.Failure("Order canceled can not be delivered!", StatusCodes.Status400BadRequest);
             }
-            orderStatus.OrderStatus = OrderConstant.DELIVERED;
+            orderStatus.OrderStatus = OrderConstant.DELIVERED.ToString();
             _uow.GetRepository<Orderstatusupdate>().UpdateAsync(orderStatus);
             if (await _uow.CommitAsync() > 0)
             {
