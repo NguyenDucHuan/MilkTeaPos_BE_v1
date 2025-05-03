@@ -1,5 +1,6 @@
 ﻿using MilkTeaPosManagement.Api.Helper;
 using MilkTeaPosManagement.Api.Models.OrderItemModels;
+using MilkTeaPosManagement.Api.Models.ProductModel;
 using MilkTeaPosManagement.Domain.Models;
 
 namespace MilkTeaPosManagement.Api.Services.Interfaces
@@ -17,5 +18,6 @@ namespace MilkTeaPosManagement.Api.Services.Interfaces
         Task<ICollection<Orderitem>> GetToppingsInOrder(int orderId, int masterId);
         Task<MethodResult<Orderitem>> UpdateOrderItem(int id, OrderItemRequest request);
         Task<ICollection<Orderitem>> GetComboItemsInCart(int masterId);
+        Task<ProductResponse?> GetProductByIdAsync(int id);
     }
 }

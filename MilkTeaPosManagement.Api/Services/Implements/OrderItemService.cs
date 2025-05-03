@@ -1,16 +1,20 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using MilkTeaPosManagement.Api.Helper;
 using MilkTeaPosManagement.Api.Models.OrderItemModels;
 using MilkTeaPosManagement.Api.Models.PaymentMethodModels;
+using MilkTeaPosManagement.Api.Models.ProductModel;
 using MilkTeaPosManagement.Api.Services.Interfaces;
 using MilkTeaPosManagement.DAL.UnitOfWorks;
 using MilkTeaPosManagement.Domain.Models;
 
 namespace MilkTeaPosManagement.Api.Services.Implements
 {
-    public class OrderItemService(IUnitOfWork uow) : IOrderItemService
+    public class OrderItemService(IUnitOfWork uow, IMapper mapper, IProductService productService) : IOrderItemService
     {
         private readonly IUnitOfWork _uow = uow;
+        private readonly IMapper _mapper = mapper;
+        private readonly IProductService _productService = productService;
         public async Task<(ICollection<Orderitem>, List<Product>?)> GetCartAsync()
         {
             var cart = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.OrderId == null && oi.MasterId == null, include: oi => oi.Include(i => i.Product));
@@ -396,6 +400,14 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 return new MethodResult<Orderitem>.Failure("Edit order item fail!", StatusCodes.Status400BadRequest);
             }
             return new MethodResult<Orderitem>.Success(existed);
+        }
+        public async Task<ProductResponse?> GetProductByIdAsync(int id)
+        {
+            var result = await _productService.GetProductByIdAsync(id);
+            return result.Match(
+                (errorMessage, statusCode) => null!,
+                product => product
+            );
         }
     }
 }

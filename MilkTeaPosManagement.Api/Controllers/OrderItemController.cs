@@ -13,6 +13,7 @@ namespace MilkTeaPosManagement.Api.Controllers
     public class OrderItemController(IOrderItemService service) : ControllerBase
     {
         private readonly IOrderItemService _service = service;
+
         [HttpGet("get-cart")]
         public async Task<IActionResult> GetCart()
         {
@@ -46,6 +47,7 @@ namespace MilkTeaPosManagement.Api.Controllers
                             comboItemName = comboItem.Product.ProductName
                         });
                     }
+                    var parent = _service.GetProductByIdAsync((int)item.Product.ParentId);
                     cartResponse.Add(new
                     {
                         orderItemId = item.OrderItemId,
@@ -56,7 +58,8 @@ namespace MilkTeaPosManagement.Api.Controllers
                         quantity = item.Quantity,
                         subPrice = item.Price + toppingPrice,
                         toppings = toppingOfProduct,
-                        comboItems = itemsOfProduct
+                        comboItems = itemsOfProduct,
+                        productParent = parent.Result
                     });
                 }
                 return Ok(new
