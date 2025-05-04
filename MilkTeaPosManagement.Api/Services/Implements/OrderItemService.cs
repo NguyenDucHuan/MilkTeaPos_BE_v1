@@ -338,7 +338,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 return new MethodResult<Orderitem>.Failure("Item not found!", StatusCodes.Status400BadRequest);
             }
-            var product = await _uow.GetRepository<Product>().SingleOrDefaultAsync(predicate: pm => pm.ProductId == existed.ProductId);
+            var product = await _uow.GetRepository<Product>().SingleOrDefaultAsync(predicate: pm => pm.ProductId == request.ProductId);
             if (product == null)
             {
                 return new MethodResult<Orderitem>.Failure("Product not found!", StatusCodes.Status400BadRequest);
@@ -353,7 +353,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 _uow.GetRepository<Orderitem>().DeleteAsync(comboItem);
             }
-            if (await _uow.CommitAsync() <= 0)
+            if (await _uow.CommitAsync() < 0)
             {
                 return new MethodResult<Orderitem>.Failure("Edit order item fail!", StatusCodes.Status400BadRequest);
             }
@@ -400,6 +400,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 }
             }
             existed.Quantity = request.Quantity;
+            existed.Price = request.Quantity * product.Prize;
             existed.ProductId = request.ProductId;
             _uow.GetRepository<Orderitem>().UpdateAsync(existed);
             if (await _uow.CommitAsync() <= 0)

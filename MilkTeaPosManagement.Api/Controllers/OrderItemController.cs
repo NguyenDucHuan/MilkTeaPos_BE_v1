@@ -47,7 +47,7 @@ namespace MilkTeaPosManagement.Api.Controllers
                             comboItemName = comboItem.Product?.ProductName
                         });
                     }
-                    var parent = _service.GetProductByIdAsync(item.Product.ParentId.HasValue ? (int)item.Product.ParentId : 1);
+                    //var parent = _service.GetProductByIdAsync(item.Product.ParentId.HasValue ? (int)item.Product.ParentId : 1);
                     cartResponse.Add(new
                     {
                         orderItemId = item.OrderItemId,
@@ -59,7 +59,7 @@ namespace MilkTeaPosManagement.Api.Controllers
                         subPrice = item.Price + toppingPrice,
                         toppings = toppingOfProduct,
                         comboItems = itemsOfProduct,
-                        productParent = parent.Result
+                        //productParent = parent.Result
                     });
                 }
                 return Ok(new
