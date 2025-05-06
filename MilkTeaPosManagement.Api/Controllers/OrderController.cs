@@ -115,7 +115,7 @@ namespace MilkTeaPosManagement.Api.Controllers
                 Ok
             );
         }
-        [HttpDelete]
+        [HttpDelete("cancel-order")]
         public async Task<IActionResult> Delete([FromBody] int orderId)
         {
             var result = await _service.CancelOrder(orderId);
@@ -124,7 +124,7 @@ namespace MilkTeaPosManagement.Api.Controllers
                 Ok
             );
         }
-        [HttpPut]
+        [HttpPut("confirm-order")]
         public async Task<IActionResult> Update([FromBody] int orderId)
         {
             var result = await _service.ConfirmOrder(orderId);

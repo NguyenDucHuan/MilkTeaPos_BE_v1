@@ -134,7 +134,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 var orderStatus = new Orderstatusupdate
                 {
                     OrderStatusUpdateId = statusId,
-                    OrderStatus = OrderConstant.SUCCESS.ToString(),
+                    OrderStatus = OrderConstant.PENDING.ToString(),
                     OrderId = orderId,
                     UpdatedAt = DateTime.Now,
                     //AccountId = account.AccountId
@@ -153,17 +153,36 @@ namespace MilkTeaPosManagement.Api.Services.Implements
         }
         public async Task<MethodResult<Order>> CancelOrder(int orderId)
         {
-            var orderStatus = await _uow.GetRepository<Orderstatusupdate>().SingleOrDefaultAsync(predicate: s => s.OrderId == orderId, include: s => s.Include(os => os.Order));
-            if (orderStatus == null)
+            var orderStatuses = await _uow.GetRepository<Orderstatusupdate>().GetListAsync(predicate: s => s.OrderId == orderId, include: s => s.Include(os => os.Order));
+            foreach (var orderStatus in orderStatuses)
             {
-                return new MethodResult<Order>.Failure("Order not found!", StatusCodes.Status400BadRequest);
+                if (orderStatus == null)
+                {
+                    return new MethodResult<Order>.Failure("Order not found!", StatusCodes.Status400BadRequest);
+                }
+                if (orderStatus.OrderStatus == "Success")
+                {
+                    return new MethodResult<Order>.Failure("Order success can not be canceled!", StatusCodes.Status400BadRequest);
+                }
+                if (orderStatus.OrderStatus == "Canceled")
+                {
+                    return new MethodResult<Order>.Failure("Order canceled can not be canceled!", StatusCodes.Status400BadRequest);
+                }
             }
-            if (orderStatus.OrderStatus == "Delivered")
+            
+            var status = await _uow.GetRepository<Orderstatusupdate>().GetListAsync();
+            var statusId = status != null && status.Count > 0 ? status.Last().OrderStatusUpdateId + 1 : 1;
+            var newStatus = new Orderstatusupdate
             {
-                return new MethodResult<Order>.Failure("Order delivered can not be canceled!", StatusCodes.Status400BadRequest);
-            }
-            orderStatus.OrderStatus = OrderConstant.CANCELED.ToString();
-            _uow.GetRepository<Orderstatusupdate>().UpdateAsync(orderStatus);
+                OrderStatusUpdateId = statusId,
+                OrderStatus = OrderConstant.CANCELED.ToString(),
+                OrderId = orderId,
+                UpdatedAt = DateTime.Now,
+                //AccountId = account.AccountId
+                AccountId = orderStatuses.First().AccountId
+            };
+
+            await _uow.GetRepository<Orderstatusupdate>().InsertAsync(newStatus);
             if (await _uow.CommitAsync() > 0)
             {
                 var setOrder = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == orderId, include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff));
@@ -174,23 +193,43 @@ namespace MilkTeaPosManagement.Api.Services.Implements
         }
         public async Task<MethodResult<Order>> ConfirmOrder(int orderId)
         {
-            var orderStatus = await _uow.GetRepository<Orderstatusupdate>().SingleOrDefaultAsync(predicate: s => s.OrderId == orderId, include: s => s.Include(os => os.Order));
-            if (orderStatus == null)
+            var orderStatuses = await _uow.GetRepository<Orderstatusupdate>().GetListAsync(predicate: s => s.OrderId == orderId, include: s => s.Include(os => os.Order));
+            foreach (var orderStatus in orderStatuses)
             {
-                return new MethodResult<Order>.Failure("Order not found!", StatusCodes.Status400BadRequest);
+                if (orderStatus == null)
+                {
+                    return new MethodResult<Order>.Failure("Order not found!", StatusCodes.Status400BadRequest);
+                }
+                if (orderStatus.OrderStatus == "Success")
+                {
+                    return new MethodResult<Order>.Failure("Order success can not be paid!", StatusCodes.Status400BadRequest);
+                }
+                if (orderStatus.OrderStatus == "Canceled")
+                {
+                    return new MethodResult<Order>.Failure("Order canceled can not be paid!", StatusCodes.Status400BadRequest);
+                }
             }
-            if (orderStatus.OrderStatus == "Cancelled")
+
+            var status = await _uow.GetRepository<Orderstatusupdate>().GetListAsync();
+            var statusId = status != null && status.Count > 0 ? status.Last().OrderStatusUpdateId + 1 : 1;
+            var newStatus = new Orderstatusupdate
             {
-                return new MethodResult<Order>.Failure("Order canceled can not be delivered!", StatusCodes.Status400BadRequest);
-            }
-            orderStatus.OrderStatus = OrderConstant.DELIVERED.ToString();
-            _uow.GetRepository<Orderstatusupdate>().UpdateAsync(orderStatus);
+                OrderStatusUpdateId = statusId,
+                OrderStatus = OrderConstant.SUCCESS.ToString(),
+                OrderId = orderId,
+                UpdatedAt = DateTime.Now,
+                //AccountId = account.AccountId
+                AccountId = orderStatuses.First().AccountId
+            };
+
+            await _uow.GetRepository<Orderstatusupdate>().InsertAsync(newStatus);
             if (await _uow.CommitAsync() > 0)
             {
                 var setOrder = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == orderId, include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff));
                 return new MethodResult<Order>.Success(setOrder);
             }
             return new MethodResult<Order>.Failure("Order cannot be paid!", StatusCodes.Status400BadRequest);
+
         }
 
         public async Task<Account?> GetCurrentUser()

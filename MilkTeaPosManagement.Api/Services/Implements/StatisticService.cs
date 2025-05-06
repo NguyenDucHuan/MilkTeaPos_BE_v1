@@ -212,7 +212,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     TotalQuantitySold = sum
                 });
             }
-            var bestSellers = productSum.OrderBy(ps => ps.TotalQuantitySold).Take(number);
+            var bestSellers = productSum.OrderByDescending(ps => ps.TotalQuantitySold).Take(number);
             return bestSellers;
         }
     }
