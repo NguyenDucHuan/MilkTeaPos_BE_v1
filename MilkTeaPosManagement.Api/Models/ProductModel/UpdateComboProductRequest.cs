@@ -12,6 +12,7 @@ namespace MilkTeaPosManagement.Api.Models.ProductModel
         public string? Description { get; set; }
 
         //public IFormFile? Image { get; set; }
+        public bool? ToppingAllowed { get; set; }
         public decimal? Prize { get; set; }
         public bool? Status { get; set; }
         public List<ComboItemUpdateRequest>? ComboItems { get; set; }

@@ -33,6 +33,7 @@ namespace MilkTeaPosManagement.Api.Models.ProductModel
         public string Description { get; set; }
         [Required(ErrorMessage = "Image is required")]
 
+        public bool ToppingAllowed { get; set; }
         public IFormFile ParentImage { get; set; }
         public List<ProductSizeRequest> Sizes { get; set; } = new List<ProductSizeRequest>();
         public bool Status { get; set; } = true;

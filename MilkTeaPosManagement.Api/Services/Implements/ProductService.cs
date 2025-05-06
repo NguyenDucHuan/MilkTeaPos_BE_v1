@@ -62,6 +62,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     Prize = null,
                     ProductType = ProductConstant.PRODUCT_TYPE_MATTER_PRODUCT,
                     ParentId = null,
+                    ToppingAllowed = parentRequest.ToppingAllowed,
                     SizeId = ProductConstant.PRODUCT_SIZE_PARENT,
                     CreateAt = DateTime.Now,
                     CreateBy = userId,
@@ -103,6 +104,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         Prize = sizeRequest.Price,
                         ProductType = ProductConstant.PRODUCT_TYPE_SINGLE_PRODUCT,
                         ParentId = createdParentProduct.ProductId,
+                        ToppingAllowed = parentRequest.ToppingAllowed,
                         SizeId = sizeRequest.Size,
                         CreateAt = DateTime.Now,
                         CreateBy = userId,
@@ -189,6 +191,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     Prize = request.Price,
                     ProductType = ProductConstant.PRODUCT_TYPE_EXTRA_PRODUCT,
                     ParentId = null,
+                    ToppingAllowed = false,
                     SizeId = ProductConstant.PRODUCT_SIZE_PARENT,
                     CreateAt = DateTime.Now,
                     CreateBy = userId,
@@ -247,6 +250,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     ImageUrl = imageUrl,
                     Prize = request.Price,
                     ProductType = ProductConstant.PRODUCT_TYPE_COMBO,
+                    ToppingAllowed = request.ToppingAllowed,
                     ParentId = null,
                     SizeId = ProductConstant.PRODUCT_SIZE_PARENT,
                     CreateAt = DateTime.Now,
@@ -506,19 +510,13 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     product.CategoryId = request.CategoryId;
                 }
                 if (!string.IsNullOrEmpty(request.ProductName))
-                {
                     product.ProductName = request.ProductName;
-                }
-
                 if (!string.IsNullOrEmpty(request.Description))
-                {
                     product.Description = request.Description;
-                }
                 if (request.Status.HasValue)
-                {
                     product.Status = request.Status;
-                }
-
+                if (request.ToppingAllowed.HasValue)
+                    product.ToppingAllowed = request.ToppingAllowed;
                 product.UpdateAt = DateTime.Now;
                 product.UpdateBy = userId;
 
@@ -700,7 +698,8 @@ namespace MilkTeaPosManagement.Api.Services.Implements
 
                 if (request.Status.HasValue)
                     product.Status = request.Status;
-
+                if (request.ToppingAllowed.HasValue)
+                    product.ToppingAllowed = request.ToppingAllowed;
 
                 product.UpdateAt = DateTime.Now;
                 product.UpdateBy = userId;
@@ -750,6 +749,8 @@ namespace MilkTeaPosManagement.Api.Services.Implements
 
                 if (request.Status.HasValue)
                     product.Status = request.Status;
+                if (request.ToppingAllowed.HasValue)
+                    product.ToppingAllowed = request.ToppingAllowed;
                 product.UpdateAt = DateTime.Now;
                 product.UpdateBy = userId;
 
