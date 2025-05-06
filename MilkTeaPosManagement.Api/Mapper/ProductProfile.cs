@@ -20,6 +20,7 @@ namespace MilkTeaPosManagement.Api.Mapper
                 .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.ProductName))
                 .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src => src.Product.ImageUrl))
                 .ForMember(dest => dest.ExtraItems, opt => opt.Ignore());
+            CreateMap<Toppingforproduct, ProductTopping>();
         }
     }
 }

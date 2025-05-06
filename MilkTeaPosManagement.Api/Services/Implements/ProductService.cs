@@ -23,7 +23,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             _cloudinaryService = cloudinaryService;
             _mapper = mapper;
         }
-        public async Task<MethodResult<List<Product>>> CreateProductWithSizesAsync(int userId, CreateProductParentRequest parentRequest, List<ProductSizeRequest> sizes)
+        public async Task<MethodResult<List<Product>>> CreateProductWithSizesAsync(int userId, CreateProductParentRequest parentRequest, List<ProductSizeRequest> sizes, List<ToppingForCreate> toppings)
         {
             try
             {
@@ -62,6 +62,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     Prize = null,
                     ProductType = ProductConstant.PRODUCT_TYPE_MATTER_PRODUCT,
                     ParentId = null,
+                    ToppingAllowed = parentRequest.ToppingAllowed,
                     SizeId = ProductConstant.PRODUCT_SIZE_PARENT,
                     CreateAt = DateTime.Now,
                     CreateBy = userId,
@@ -103,6 +104,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         Prize = sizeRequest.Price,
                         ProductType = ProductConstant.PRODUCT_TYPE_SINGLE_PRODUCT,
                         ParentId = createdParentProduct.ProductId,
+                        ToppingAllowed = parentRequest.ToppingAllowed,
                         SizeId = sizeRequest.Size,
                         CreateAt = DateTime.Now,
                         CreateBy = userId,
@@ -114,6 +116,31 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     await _uow.GetRepository<Product>().InsertAsync(sizeProduct);
                     await _uow.CommitAsync();
                     createdProducts.Add(sizeProduct);
+                }
+                foreach (var topping in toppings)
+                {
+                    var toppingProduct = await _uow.GetRepository<Product>().SingleOrDefaultAsync(
+                        predicate: p => p.ProductId == topping.ToppingId && p.ProductType == "Extra"
+                    );
+                    if (toppingProduct != null)
+                    {
+                        var newTopping = new Toppingforproduct
+                        {
+                            ProductId = createdParentProduct.ProductId,
+                            ToppingId = topping.ToppingId,
+                            Quantity = topping.Quantity
+                        };
+                        await _uow.GetRepository<Toppingforproduct>().InsertAsync(newTopping);
+                        await _uow.CommitAsync();
+                    }
+                    else
+                    {
+                        await _uow.RollbackTransactionAsync();
+                        return new MethodResult<List<Product>>.Failure(
+                            $"Topping with ID {topping.ToppingId} not found or is not an extra product or not exist",
+                            StatusCodes.Status400BadRequest
+                        );
+                    }
                 }
 
                 await _uow.CommitTransactionAsync();
@@ -128,7 +155,6 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 );
             }
         }
-
         public async Task<MethodResult<Product>> CreateExtraProductAsync(int userId, CreateExtraProductRequest request)
         {
             try
@@ -165,6 +191,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     Prize = request.Price,
                     ProductType = ProductConstant.PRODUCT_TYPE_EXTRA_PRODUCT,
                     ParentId = null,
+                    ToppingAllowed = false,
                     SizeId = ProductConstant.PRODUCT_SIZE_PARENT,
                     CreateAt = DateTime.Now,
                     CreateBy = userId,
@@ -223,6 +250,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     ImageUrl = imageUrl,
                     Prize = request.Price,
                     ProductType = ProductConstant.PRODUCT_TYPE_COMBO,
+                    ToppingAllowed = request.ToppingAllowed,
                     ParentId = null,
                     SizeId = ProductConstant.PRODUCT_SIZE_PARENT,
                     CreateAt = DateTime.Now,
@@ -354,6 +382,10 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 .Where(p => p.ProductType == ProductConstant.PRODUCT_TYPE_COMBO)
                 .ToList();
 
+            var extraProducts = products
+                .Where(p => p.ProductType == ProductConstant.PRODUCT_TYPE_EXTRA_PRODUCT)
+                .ToList();
+
             if (masterProducts.Any())
             {
                 var masterIds = masterProducts.Select(p => p.ProductId).ToList();
@@ -397,6 +429,23 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     }
                 }
             }
+            if (extraProducts.Any())
+            {
+                var extraIds = extraProducts.Select(p => p.ProductId).ToList();
+                var extraItems = await _uow.GetRepository<Toppingforproduct>().GetListAsync(
+                    selector: c => _mapper.Map<ProductTopping>(c),
+                    predicate: c => extraIds.Contains(c.ToppingId),
+                    include: q => q.Include(c => c.Product)
+                );
+                foreach (var extra in extraItems)
+                {
+                    var product = products.FirstOrDefault(p => p.ProductId == extra.ProductId);
+                    if (product != null)
+                    {
+                        product.Toppings.Add(extra);
+                    }
+                }
+            }
         }
         public async Task<MethodResult<ProductResponse>> GetProductByIdAsync(int id)
         {
@@ -428,7 +477,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 );
             }
         }
-        public async Task<MethodResult<ProductResponse>> UpdateMasterProductAsync(int userId, UpdateMasterProductRequest request, List<UpdateSizeProductRequest> Variants)
+        public async Task<MethodResult<ProductResponse>> UpdateMasterProductAsync(int userId, UpdateMasterProductRequest request, List<UpdateSizeProductRequest> Variants, List<UpdateToppingProductRequest> toppings)
         {
             try
             {
@@ -461,19 +510,13 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     product.CategoryId = request.CategoryId;
                 }
                 if (!string.IsNullOrEmpty(request.ProductName))
-                {
                     product.ProductName = request.ProductName;
-                }
-
                 if (!string.IsNullOrEmpty(request.Description))
-                {
                     product.Description = request.Description;
-                }
                 if (request.Status.HasValue)
-                {
                     product.Status = request.Status;
-                }
-
+                if (request.ToppingAllowed.HasValue)
+                    product.ToppingAllowed = request.ToppingAllowed;
                 product.UpdateAt = DateTime.Now;
                 product.UpdateBy = userId;
 
@@ -554,6 +597,49 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     }
                 }
 
+                if (toppings != null && toppings.Any())
+                {
+                    var existingToppings = await _uow.GetRepository<Toppingforproduct>().GetListAsync(
+                        predicate: t => t.ProductId == product.ProductId
+                    );
+                    foreach (var existingTopping in existingToppings)
+                    {
+                        var toppingExists = toppings.Any(t => t.ToppingId == existingTopping.ToppingId);
+                        if (!toppingExists)
+                        {
+                            _uow.GetRepository<Toppingforproduct>().DeleteAsync(existingTopping);
+                            await _uow.CommitAsync();
+                        }
+                    }
+                    foreach (var topping in toppings)
+                    {
+                        var toppingProduct = await _uow.GetRepository<Product>().SingleOrDefaultAsync(
+                            predicate: p => p.ProductId == topping.ToppingId && p.ProductType == "Extra"
+                        );
+                        var existingTopping = await _uow.GetRepository<Toppingforproduct>().SingleOrDefaultAsync(
+                            predicate: t => t.ProductId == product.ProductId && t.ToppingId == topping.ToppingId
+                        );
+                        if (existingTopping != null)
+                        {
+                            existingTopping.Quantity = topping.Quantity;
+                            _uow.GetRepository<Toppingforproduct>().UpdateAsync(existingTopping);
+                            await _uow.CommitAsync();
+                        }
+                        else
+                        if (toppingProduct != null && existingTopping == null)
+                        {
+                            var newTopping = new Toppingforproduct
+                            {
+                                ProductId = product.ProductId,
+                                ToppingId = topping.ToppingId,
+                                Quantity = topping.Quantity
+                            };
+                            await _uow.GetRepository<Toppingforproduct>().InsertAsync(newTopping);
+                            await _uow.CommitAsync();
+                        }
+                    }
+                }
+
                 await _uow.CommitAsync();
                 var productResponse = _mapper.Map<ProductResponse>(product);
                 await EnrichProductDetails(new List<ProductResponse> { productResponse });
@@ -570,7 +656,6 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 );
             }
         }
-
         public async Task<MethodResult<ProductResponse>> UpdateExtraProductAsync(int userId, UpdateExtraProductRequest request)
         {
             try
@@ -613,7 +698,8 @@ namespace MilkTeaPosManagement.Api.Services.Implements
 
                 if (request.Status.HasValue)
                     product.Status = request.Status;
-
+                if (request.ToppingAllowed.HasValue)
+                    product.ToppingAllowed = request.ToppingAllowed;
 
                 product.UpdateAt = DateTime.Now;
                 product.UpdateBy = userId;
@@ -632,7 +718,6 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 );
             }
         }
-
         public async Task<MethodResult<ProductResponse>> UpdateComboProductAsync(int userId, UpdateComboProductRequest request)
         {
             try
@@ -664,6 +749,8 @@ namespace MilkTeaPosManagement.Api.Services.Implements
 
                 if (request.Status.HasValue)
                     product.Status = request.Status;
+                if (request.ToppingAllowed.HasValue)
+                    product.ToppingAllowed = request.ToppingAllowed;
                 product.UpdateAt = DateTime.Now;
                 product.UpdateBy = userId;
 

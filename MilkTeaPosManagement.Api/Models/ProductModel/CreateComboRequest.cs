@@ -7,6 +7,7 @@
         public IFormFile? Image { get; set; }
         public decimal Price { get; set; }
         public bool? Status { get; set; }
+        public bool? ToppingAllowed { get; set; }
         public List<ComboItemRequest> ComboItems { get; set; } = new List<ComboItemRequest>();
     }
 

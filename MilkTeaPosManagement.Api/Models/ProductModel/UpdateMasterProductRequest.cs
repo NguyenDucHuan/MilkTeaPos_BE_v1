@@ -15,6 +15,7 @@ namespace MilkTeaPosManagement.Api.Models.ProductModel
         [StringLength(500)]
         public string? Description { get; set; }
 
+        public bool? ToppingAllowed { get; set; }
         //public IFormFile? Image { get; set; }
         public bool? Status { get; set; }
 
@@ -28,5 +29,13 @@ namespace MilkTeaPosManagement.Api.Models.ProductModel
         public decimal? Prize { get; set; }
         //public IFormFile? Image { get; set; }
         public bool? Status { get; set; }
+    }
+    public class UpdateToppingProductRequest
+    {
+        [Required]
+        public int ProductId { get; set; }
+        [Required]
+        public int ToppingId { get; set; }
+        public int? Quantity { get; set; }
     }
 }

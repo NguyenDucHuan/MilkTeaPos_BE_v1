@@ -13,6 +13,15 @@ namespace MilkTeaPosManagement.Api.Models.ProductModel
 
     }
 
+    public class ToppingForCreate
+    {
+        [Required(ErrorMessage = "Topping ID is required")]
+        public int ToppingId { get; set; }
+        [Required(ErrorMessage = "Quantity is required")]
+        public int Quantity { get; set; }
+
+    }
+
     public class CreateProductParentRequest
     {
         [Required(ErrorMessage = "Product name is required")]
@@ -24,6 +33,7 @@ namespace MilkTeaPosManagement.Api.Models.ProductModel
         public string Description { get; set; }
         [Required(ErrorMessage = "Image is required")]
 
+        public bool ToppingAllowed { get; set; }
         public IFormFile ParentImage { get; set; }
         public List<ProductSizeRequest> Sizes { get; set; } = new List<ProductSizeRequest>();
         public bool Status { get; set; } = true;
