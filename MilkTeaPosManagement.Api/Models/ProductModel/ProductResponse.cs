@@ -20,6 +20,7 @@
 
         public List<ProductResponse> Variants { get; set; } = new List<ProductResponse>();
         public List<ComboItemResponse> ComboItems { get; set; } = new List<ComboItemResponse>();
+        public List<ProductTopping> Toppings { get; set; } = new List<ProductTopping>();
     }
 
     public class ComboItemResponse
@@ -35,6 +36,12 @@
         public int? MasterId { get; internal set; }
     }
 
+    public class ProductTopping
+    {
+        public int ProductId { get; set; }
+        public int ToppingId { get; set; }
+        public int? Quantity { get; set; }
+    }
     public class PaginatedResponse<T>
     {
         public List<T> Items { get; set; } = new List<T>();

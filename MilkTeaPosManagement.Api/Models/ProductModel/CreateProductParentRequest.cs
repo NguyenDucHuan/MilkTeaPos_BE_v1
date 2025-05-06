@@ -13,6 +13,15 @@ namespace MilkTeaPosManagement.Api.Models.ProductModel
 
     }
 
+    public class ToppingForCreate
+    {
+        [Required(ErrorMessage = "Topping ID is required")]
+        public int ToppingId { get; set; }
+        [Required(ErrorMessage = "Quantity is required")]
+        public int Quantity { get; set; }
+
+    }
+
     public class CreateProductParentRequest
     {
         [Required(ErrorMessage = "Product name is required")]

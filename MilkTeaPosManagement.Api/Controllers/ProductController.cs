@@ -20,7 +20,7 @@ namespace MilkTeaPosManagement.Api.Controllers
         [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
         [HttpPost]
         [Route(Router.ProductRoute.Create_Mater_Producr)]
-        public async Task<IActionResult> CreateParentProduct([FromForm] CreateProductParentRequest parentRequest)
+        public async Task<IActionResult> CreateParentProduct([FromForm] CreateProductParentRequest parentRequest, List<ToppingForCreate> toppings)
         {
             var userIdString = User.FindFirst(ClaimTypes.Sid)?.Value;
             if (!int.TryParse(userIdString, out var userId))
@@ -33,7 +33,7 @@ namespace MilkTeaPosManagement.Api.Controllers
                 return BadRequest("At least one size is required");
             }
 
-            var result = await _productService.CreateProductWithSizesAsync(userId, parentRequest, parentRequest.Sizes);
+            var result = await _productService.CreateProductWithSizesAsync(userId, parentRequest, parentRequest.Sizes, toppings);
             return result.Match(
                 (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
                 products => Ok(new
@@ -120,7 +120,7 @@ namespace MilkTeaPosManagement.Api.Controllers
         [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
         [HttpPut]
         [Route(Router.ProductRoute.UpdateMaster)]
-        public async Task<IActionResult> UpdateMasterProduct(UpdateMasterProductRequest request, List<UpdateSizeProductRequest> Variants)
+        public async Task<IActionResult> UpdateMasterProduct(UpdateMasterProductRequest request, List<UpdateSizeProductRequest> Variants, List<UpdateToppingProductRequest> toppings)
         {
             var userIdString = User.FindFirst(ClaimTypes.Sid)?.Value;
             if (!int.TryParse(userIdString, out var userId))
@@ -128,7 +128,7 @@ namespace MilkTeaPosManagement.Api.Controllers
                 return BadRequest("Invalid user ID.");
             }
 
-            var result = await _productService.UpdateMasterProductAsync(userId, request, Variants);
+            var result = await _productService.UpdateMasterProductAsync(userId, request, Variants, toppings);
 
             return result.Match(
                 (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),

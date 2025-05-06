@@ -29,4 +29,12 @@ namespace MilkTeaPosManagement.Api.Models.ProductModel
         //public IFormFile? Image { get; set; }
         public bool? Status { get; set; }
     }
+    public class UpdateToppingProductRequest
+    {
+        [Required]
+        public int ProductId { get; set; }
+        [Required]
+        public int ToppingId { get; set; }
+        public int? Quantity { get; set; }
+    }
 }

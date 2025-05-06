@@ -220,3 +220,6 @@ VALUES
     ('Cash', 'Payment made in cash', TRUE),
     ('Credit Card', 'Payment made via credit card', TRUE),
     ('Online', 'Payment made through online services', TRUE);
+
+insert Into toppingforproduct (ProductId,ToppingId,Quantity) values
+(1, 36 , 1);
