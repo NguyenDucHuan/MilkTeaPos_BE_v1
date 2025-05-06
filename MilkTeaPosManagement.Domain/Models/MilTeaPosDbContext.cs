@@ -33,13 +33,16 @@ public partial class MilTeaPosDbContext : DbContext
 
     public virtual DbSet<Product> Products { get; set; }
 
-    //    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-    //        => optionsBuilder.UseMySql("server=localhost;port=3306;database=milktea_pos_db;uid=root;pwd=123456", Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.41-mysql"));
+    public virtual DbSet<Toppingforproduct> Toppingforproducts { get; set; }
 
+    public virtual DbSet<Transaction> Transactions { get; set; }
+
+    public virtual DbSet<Voucher> Vouchers { get; set; }
+
+    public virtual DbSet<Voucherusage> Voucherusages { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
- => optionsBuilder.UseMySql(GetConnectionString(), Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.39-mysql"));
+=> optionsBuilder.UseMySql(GetConnectionString(), Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.39-mysql"));
 
     private string GetConnectionString()
     {
@@ -113,8 +116,6 @@ public partial class MilTeaPosDbContext : DbContext
 
             entity.ToTable("orders");
 
-            entity.HasIndex(e => e.PaymentMethodId, "PaymentMethodId");
-
             entity.HasIndex(e => e.StaffId, "StaffID");
 
             entity.Property(e => e.CreateAt)
@@ -123,10 +124,6 @@ public partial class MilTeaPosDbContext : DbContext
             entity.Property(e => e.Note).HasColumnType("text");
             entity.Property(e => e.StaffId).HasColumnName("StaffID");
             entity.Property(e => e.TotalAmount).HasPrecision(10, 2);
-
-            entity.HasOne(d => d.PaymentMethod).WithMany(p => p.Orders)
-                .HasForeignKey(d => d.PaymentMethodId)
-                .HasConstraintName("orders_ibfk_2");
 
             entity.HasOne(d => d.Staff).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.StaffId)
@@ -165,7 +162,7 @@ public partial class MilTeaPosDbContext : DbContext
 
             entity.HasIndex(e => e.OrderId, "OrderId");
 
-            entity.Property(e => e.OrderStatus).HasColumnType("enum('Pending','Shipped','Delivered','Cancelled')");
+            entity.Property(e => e.OrderStatus).HasColumnType("enum('Pending','Shipped','Delivered','Success','Cancelled')");
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("Updated_at");
@@ -222,6 +219,114 @@ public partial class MilTeaPosDbContext : DbContext
             entity.HasOne(d => d.Category).WithMany(p => p.Products)
                 .HasForeignKey(d => d.CategoryId)
                 .HasConstraintName("products_ibfk_1");
+        });
+
+        modelBuilder.Entity<Toppingforproduct>(entity =>
+        {
+            entity.HasKey(e => new { e.ProductId, e.ToppingId })
+                .HasName("PRIMARY")
+                .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
+
+            entity.ToTable("toppingforproduct");
+
+            entity.HasIndex(e => e.ToppingId, "ToppingId");
+
+            entity.Property(e => e.Quantity).HasDefaultValueSql("'1'");
+
+            entity.HasOne(d => d.Product).WithMany(p => p.ToppingforproductProducts)
+                .HasForeignKey(d => d.ProductId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("toppingforproduct_ibfk_1");
+
+            entity.HasOne(d => d.Topping).WithMany(p => p.ToppingforproductToppings)
+                .HasForeignKey(d => d.ToppingId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("toppingforproduct_ibfk_2");
+        });
+
+        modelBuilder.Entity<Transaction>(entity =>
+        {
+            entity.HasKey(e => e.TransactionId).HasName("PRIMARY");
+
+            entity.ToTable("transactions");
+
+            entity.HasIndex(e => e.OrderId, "OrderId");
+
+            entity.HasIndex(e => e.PaymentMethodId, "PaymentMethodId");
+
+            entity.HasIndex(e => e.StaffId, "StaffId");
+
+            entity.Property(e => e.Amount).HasPrecision(10, 2);
+            entity.Property(e => e.AmountPaid).HasPrecision(10, 2);
+            entity.Property(e => e.ChangeGiven).HasPrecision(10, 2);
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("Created_at");
+            entity.Property(e => e.Description).HasColumnType("text");
+            entity.Property(e => e.TransactionDate).HasColumnType("datetime");
+            entity.Property(e => e.TransactionType).HasMaxLength(20);
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("Updated_at");
+
+            entity.HasOne(d => d.Order).WithMany(p => p.Transactions)
+                .HasForeignKey(d => d.OrderId)
+                .HasConstraintName("transactions_ibfk_1");
+
+            entity.HasOne(d => d.PaymentMethod).WithMany(p => p.Transactions)
+                .HasForeignKey(d => d.PaymentMethodId)
+                .HasConstraintName("transactions_ibfk_2");
+
+            entity.HasOne(d => d.Staff).WithMany(p => p.Transactions)
+                .HasForeignKey(d => d.StaffId)
+                .HasConstraintName("transactions_ibfk_3");
+        });
+
+        modelBuilder.Entity<Voucher>(entity =>
+        {
+            entity.HasKey(e => e.VoucherId).HasName("PRIMARY");
+
+            entity.ToTable("vouchers");
+
+            entity.HasIndex(e => e.VoucherCode, "VoucherCode").IsUnique();
+
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("Created_at");
+            entity.Property(e => e.DiscountAmount).HasPrecision(10, 2);
+            entity.Property(e => e.DiscountType).HasColumnType("enum('Amount','Percentage')");
+            entity.Property(e => e.ExpirationDate).HasColumnType("datetime");
+            entity.Property(e => e.MinimumOrderAmount)
+                .HasPrecision(10, 2)
+                .HasDefaultValueSql("'0.00'");
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("Updated_at");
+            entity.Property(e => e.VoucherCode).HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<Voucherusage>(entity =>
+        {
+            entity.HasKey(e => e.VoucherUsageId).HasName("PRIMARY");
+
+            entity.ToTable("voucherusages");
+
+            entity.HasIndex(e => e.OrderId, "OrderId");
+
+            entity.HasIndex(e => e.VoucherId, "VoucherId");
+
+            entity.Property(e => e.AmountUsed).HasPrecision(10, 2);
+            entity.Property(e => e.UsedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("Used_at");
+
+            entity.HasOne(d => d.Order).WithMany(p => p.Voucherusages)
+                .HasForeignKey(d => d.OrderId)
+                .HasConstraintName("voucherusages_ibfk_2");
+
+            entity.HasOne(d => d.Voucher).WithMany(p => p.Voucherusages)
+                .HasForeignKey(d => d.VoucherId)
+                .HasConstraintName("voucherusages_ibfk_1");
         });
 
         OnModelCreatingPartial(modelBuilder);

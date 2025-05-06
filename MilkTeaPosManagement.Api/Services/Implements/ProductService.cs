@@ -255,7 +255,6 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         Combod = comboProduct.ProductId,
                         ProductId = item.ProductId,
                         Quantity = item.Quantity,
-                        Discount = item.Discount,
                         MasterId = null
                     };
 
@@ -284,7 +283,6 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                                 Combod = comboProduct.ProductId,
                                 ProductId = extraItem.ExtraProductId,
                                 Quantity = extraItem.Quantity,
-                                Discount = extraItem.Discount,
                                 MasterId = item.ProductId
                             };
 
@@ -693,8 +691,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                             Combod = product.ProductId,
                             ProductId = comboItem.ProductId,
                             Quantity = comboItem.Quantity,
-                            MasterId = comboItem.MasterId,
-                            Discount = comboItem.Discount
+                            MasterId = comboItem.MasterId
                         };
 
                         await _uow.GetRepository<Comboltem>().InsertAsync(newComboItem);

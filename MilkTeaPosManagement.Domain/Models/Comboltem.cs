@@ -13,8 +13,6 @@ public partial class Comboltem
 
     public int? Quantity { get; set; }
 
-    public int? Discount { get; set; }
-
     public int? MasterId { get; set; }
 
     public virtual Product? Product { get; set; }
