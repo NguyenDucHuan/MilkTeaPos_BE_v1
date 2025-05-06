@@ -13,5 +13,5 @@ public partial class Paymentmethod
 
     public bool? Status { get; set; }
 
-    public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+    public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
 }

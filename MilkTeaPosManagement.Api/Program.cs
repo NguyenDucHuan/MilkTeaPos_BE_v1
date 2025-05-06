@@ -17,7 +17,7 @@ namespace MilkTeaPosManagement.Api
             builder.Services.AddControllers();
 
             builder.Services.AddDbContext<MilTeaPosDbContext>(options =>
-                options.UseMySql(builder.Configuration.GetConnectionString("BlindBoxDbConnection"),
+                options.UseMySql(builder.Configuration.GetConnectionString("MilkTeaDBConnection"),
                 new MySqlServerVersion(new Version(8, 0, 37))));
             builder.Services.Configure<AuthenticationConfiguration>(builder.Configuration.GetSection("AuthenticationConfiguration"));
             builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
@@ -57,15 +57,11 @@ namespace MilkTeaPosManagement.Api
                     });
                 });
             });
-            if (app.Environment.IsDevelopment())
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
             {
-                app.UseSwagger();
-                app.UseSwaggerUI(c =>
-                {
-                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "MilkTeaPosProject.API v1");
-                });
-            }
-
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "MilkTeaPosProject.API v1");
+            });
             app.UseHttpsRedirection();
             app.UseCors("AllowFrontend");
             app.UseAuthentication();

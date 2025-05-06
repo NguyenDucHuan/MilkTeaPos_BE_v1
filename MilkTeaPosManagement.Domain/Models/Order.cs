@@ -15,13 +15,13 @@ public partial class Order
 
     public int? StaffId { get; set; }
 
-    public int? PaymentMethodId { get; set; }
-
     public virtual ICollection<Orderitem> Orderitems { get; set; } = new List<Orderitem>();
 
     public virtual ICollection<Orderstatusupdate> Orderstatusupdates { get; set; } = new List<Orderstatusupdate>();
 
-    public virtual Paymentmethod? PaymentMethod { get; set; }
-
     public virtual Account? Staff { get; set; }
+
+    public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
+
+    public virtual ICollection<Voucherusage> Voucherusages { get; set; } = new List<Voucherusage>();
 }
