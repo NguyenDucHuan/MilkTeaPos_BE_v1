@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Pomelo.EntityFrameworkCore.MySql.Scaffolding.Internal;
 
 namespace MilkTeaPosManagement.Domain.Models;
@@ -42,18 +41,9 @@ public partial class MilTeaPosDbContext : DbContext
     public virtual DbSet<Voucherusage> Voucherusages { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-=> optionsBuilder.UseMySql(GetConnectionString(), Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.39-mysql"));
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseMySql("server=localhost;port=3306;database=milktea_pos_db;uid=root;pwd=123456", Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.41-mysql"));
 
-    private string GetConnectionString()
-    {
-        IConfiguration config = new ConfigurationBuilder()
-             .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile("appsettings.json", true, true)
-                    .Build();
-        var strConn = config["ConnectionStrings:MilkTeaDBConnection"];
-
-        return strConn;
-    }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -290,18 +280,24 @@ public partial class MilTeaPosDbContext : DbContext
 
             entity.HasIndex(e => e.VoucherCode, "VoucherCode").IsUnique();
 
-            entity.Property(e => e.CreatedAt)
+            entity.Property(e => e.CreateAt)
                 .HasColumnType("datetime")
-                .HasColumnName("Created_at");
+                .HasColumnName("Create_at");
+            entity.Property(e => e.CreateBy).HasColumnName("Create_by");
+            entity.Property(e => e.DisableAt)
+                .HasColumnType("datetime")
+                .HasColumnName("Disable_at");
+            entity.Property(e => e.DisableBy).HasColumnName("Disable_by");
             entity.Property(e => e.DiscountAmount).HasPrecision(10, 2);
             entity.Property(e => e.DiscountType).HasColumnType("enum('Amount','Percentage')");
             entity.Property(e => e.ExpirationDate).HasColumnType("datetime");
             entity.Property(e => e.MinimumOrderAmount)
                 .HasPrecision(10, 2)
                 .HasDefaultValueSql("'0.00'");
-            entity.Property(e => e.UpdatedAt)
+            entity.Property(e => e.UpdateAt)
                 .HasColumnType("datetime")
-                .HasColumnName("Updated_at");
+                .HasColumnName("Update_at");
+            entity.Property(e => e.UpdateBy).HasColumnName("Update_by");
             entity.Property(e => e.VoucherCode).HasMaxLength(50);
         });
 
