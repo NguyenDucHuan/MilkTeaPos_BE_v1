@@ -24,10 +24,11 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             }
             return await _uow.GetRepository<Voucher>().GetPagingListAsync(
                 selector: v => _mapper.Map<VoucherResponse>(v),
-                predicate: v => (!string.IsNullOrEmpty(filter.VoucherCode) || v.VoucherCode.ToLower().Contains(filter.VoucherCode.ToLower())) &&
+                predicate: v =>
+                //(!string.IsNullOrEmpty(filter.VoucherCode) || v.VoucherCode.ToLower().Contains(filter.VoucherCode.ToLower())) &&
                 (!filter.MinDiscountAmount.HasValue || v.DiscountAmount > filter.MinDiscountAmount) &&
                 (!filter.MaxDiscountAmount.HasValue || v.DiscountAmount < filter.MaxDiscountAmount) &&
-                (!string.IsNullOrEmpty(filter.DiscountType) || v.DiscountType.ToLower().Contains(filter.DiscountType.ToLower())) &&
+                //(!string.IsNullOrEmpty(filter.DiscountType) || v.DiscountType.ToLower().Contains(filter.DiscountType.ToLower())) &&
                 (!filter.FromDate.HasValue || v.ExpirationDate > filter.FromDate) &&
                 (!filter.ToDate.HasValue || v.ExpirationDate < filter.ToDate),
                 page: filter.Page.HasValue ? (int)filter.Page : 1,
