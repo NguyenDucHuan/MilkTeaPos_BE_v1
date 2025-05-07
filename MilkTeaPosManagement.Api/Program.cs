@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using MilkTeaPosManagement.Api.Extensions;
 using MilkTeaPosManagement.Api.Models.Configurations;
 using MilkTeaPosManagement.Domain.Models;
+using Net.payOS;
 using System.Text.Json.Serialization;
 
 namespace MilkTeaPosManagement.Api
@@ -21,6 +22,11 @@ namespace MilkTeaPosManagement.Api
                 new MySqlServerVersion(new Version(8, 0, 37))));
             builder.Services.Configure<AuthenticationConfiguration>(builder.Configuration.GetSection("AuthenticationConfiguration"));
             builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
+
+            PayOS payOS = new(builder.Configuration["payOS:ClientId"] ?? throw new Exception("Cannot find environment"),
+                    builder.Configuration["payOS:ApiKey"] ?? throw new Exception("Cannot find environment"),
+                    builder.Configuration["payOS:ChecksumKey"] ?? throw new Exception("Cannot find environment"));
+            builder.Services.AddSingleton(payOS);
 
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerConfig();

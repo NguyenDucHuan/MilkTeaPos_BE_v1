@@ -210,9 +210,8 @@ namespace MilkTeaPosManagement.Api.Services.Implements
         }
         public async Task<MethodResult<Order>> CancelOrder(int orderId)
         {
-            var orderStatuses = await _uow.GetRepository<Orderstatusupdate>().GetListAsync(predicate: s => s.OrderId == orderId, include: s => s.Include(os => os.Order));
-            foreach (var orderStatus in orderStatuses)
-            {
+            var orderStatuses = await _uow.GetRepository<Orderstatusupdate>().GetListAsync(predicate: s => s.OrderId == orderId, include: s => s.Include(os => os.Order), orderBy: o => o.OrderByDescending(os => os.UpdatedAt));
+            var orderStatus = orderStatuses.FirstOrDefault();
                 if (orderStatus == null)
                 {
                     return new MethodResult<Order>.Failure("Order not found!", StatusCodes.Status400BadRequest);
@@ -225,7 +224,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 {
                     return new MethodResult<Order>.Failure("Order canceled can not be canceled!", StatusCodes.Status400BadRequest);
                 }
-            }
+            
             
             var status = await _uow.GetRepository<Orderstatusupdate>().GetListAsync();
             var statusId = status != null && status.Count > 0 ? status.Last().OrderStatusUpdateId + 1 : 1;
@@ -250,21 +249,19 @@ namespace MilkTeaPosManagement.Api.Services.Implements
         }
         public async Task<MethodResult<Order>> ConfirmOrder(int orderId)
         {
-            var orderStatuses = await _uow.GetRepository<Orderstatusupdate>().GetListAsync(predicate: s => s.OrderId == orderId, include: s => s.Include(os => os.Order));
-            foreach (var orderStatus in orderStatuses)
+            var orderStatuses = await _uow.GetRepository<Orderstatusupdate>().GetListAsync(predicate: s => s.OrderId == orderId, include: s => s.Include(os => os.Order), orderBy: o => o.OrderByDescending(os => os.UpdatedAt));
+            var orderStatus = orderStatuses.FirstOrDefault();
+            if (orderStatus == null)
             {
-                if (orderStatus == null)
-                {
-                    return new MethodResult<Order>.Failure("Order not found!", StatusCodes.Status400BadRequest);
-                }
-                if (orderStatus.OrderStatus == "Success")
-                {
-                    return new MethodResult<Order>.Failure("Order success can not be paid!", StatusCodes.Status400BadRequest);
-                }
-                if (orderStatus.OrderStatus == "Canceled")
-                {
-                    return new MethodResult<Order>.Failure("Order canceled can not be paid!", StatusCodes.Status400BadRequest);
-                }
+                return new MethodResult<Order>.Failure("Order not found!", StatusCodes.Status400BadRequest);
+            }
+            if (orderStatus.OrderStatus == "Success")
+            {
+                return new MethodResult<Order>.Failure("Order success can not be paid!", StatusCodes.Status400BadRequest);
+            }
+            if (orderStatus.OrderStatus == "Canceled")
+            {
+                return new MethodResult<Order>.Failure("Order canceled can not be paid!", StatusCodes.Status400BadRequest);
             }
 
             var status = await _uow.GetRepository<Orderstatusupdate>().GetListAsync();
