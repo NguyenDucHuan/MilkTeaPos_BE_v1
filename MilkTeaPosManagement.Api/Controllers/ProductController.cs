@@ -20,7 +20,7 @@ namespace MilkTeaPosManagement.Api.Controllers
         [Authorize(Roles = UserConstant.USER_ROLE_MANAGER)]
         [HttpPost]
         [Route(Router.ProductRoute.Create_Mater_Producr)]
-        public async Task<IActionResult> CreateParentProduct([FromForm] CreateProductParentRequest parentRequest, List<ToppingForCreate> toppings)
+        public async Task<IActionResult> CreateParentProduct([FromForm] CreateProductParentRequest parentRequest)
         {
             var userIdString = User.FindFirst(ClaimTypes.Sid)?.Value;
             if (!int.TryParse(userIdString, out var userId))
@@ -33,7 +33,7 @@ namespace MilkTeaPosManagement.Api.Controllers
                 return BadRequest("At least one size is required");
             }
 
-            var result = await _productService.CreateProductWithSizesAsync(userId, parentRequest, parentRequest.Sizes, toppings);
+            var result = await _productService.CreateProductWithSizesAsync(userId, parentRequest, parentRequest.Sizes, parentRequest.Toppings);
             return result.Match(
                 (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
                 products => Ok(new
