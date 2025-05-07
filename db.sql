@@ -83,7 +83,9 @@ CREATE TABLE Vouchers (
     Create_at DATETIME,
     Create_by INT,
     Update_at DATETIME,
-    Update_by INT
+    Update_by INT,
+	Disable_at DATETIME,
+    Disable_by INT
 );
 
 
