@@ -1,4 +1,5 @@
-﻿using CloudinaryDotNet.Actions;
+﻿using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
 using Microsoft.EntityFrameworkCore;
 using MilkTeaPosManagement.Api.Constants;
 using MilkTeaPosManagement.Api.Helper;
@@ -24,7 +25,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             //{
             //    return (0, null, "Status must be in [PENDING, SHIPPED, DELIVERED, CANCELED]");
             //}
-            var staff = await _uow.GetRepository<Account>().SingleOrDefaultAsync(predicate: acc => acc.AccountId == search.StaffId);
+            var staff = await _uow.GetRepository<Domain.Models.Account>().SingleOrDefaultAsync(predicate: acc => acc.AccountId == search.StaffId);
             if (search.StaffId != null && staff == null)
             {
                 return (0, null, "Staff not found");
@@ -75,7 +76,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 return new MethodResult<Order>.Failure("Order not have any product!", StatusCodes.Status400BadRequest);
             }
-            var account = await _uow.GetRepository<Account>().SingleOrDefaultAsync(predicate: a => a.AccountId == orderRequest.StaffId);
+            var account = await _uow.GetRepository<Domain.Models.Account>().SingleOrDefaultAsync(predicate: a => a.AccountId == orderRequest.StaffId);
             
             //var account = await GetCurrentUser();
             //if (account == null)
@@ -94,9 +95,39 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             foreach (var item in orderItems)
             {
                 totalAmount += item.Price;
-            }
+            }            
             var orders = await _uow.GetRepository<Order>().GetListAsync();
             var orderId = orders != null && orders.Count > 0 ? orders.Last().OrderId + 1 : 1;
+
+            if (!string.IsNullOrEmpty(orderRequest.VoucherCode))
+            {
+                var voucher = await _uow.GetRepository<Voucher>().SingleOrDefaultAsync(predicate: v => v.VoucherCode.ToLower().Equals(orderRequest.VoucherCode.ToLower()));
+                if (voucher == null)
+                {
+                    return new MethodResult<Order>.Failure("Voucher not found!", StatusCodes.Status400BadRequest);
+                }
+                if (voucher.ExpirationDate < DateTime.Now)
+                {
+                    return new MethodResult<Order>.Failure("Voucher not valid!", StatusCodes.Status400BadRequest);
+                }
+                if (voucher.MinimumOrderAmount > totalAmount)
+                {
+                    return new MethodResult<Order>.Failure("Not eligible to use voucher!", StatusCodes.Status400BadRequest);
+                }
+                var voucherUsage = new Voucherusage
+                {
+                    VoucherId = voucher.VoucherId,
+                    OrderId = orderId,
+                    AmountUsed = voucher.DiscountType == DiscountTypeConstant.AMOUNT.ToString() ? voucher.DiscountAmount : totalAmount * voucher.DiscountAmount,
+                    UsedAt = DateTime.Now
+                };
+                totalAmount -= voucherUsage.AmountUsed;
+                await _uow.GetRepository<Voucherusage>().InsertAsync(voucherUsage);
+                if (await _uow.CommitAsync() <= 0)
+                {
+                    return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
+                }
+            }
             var order = new Order
             {
                 OrderId = orderId,
@@ -138,39 +169,10 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
                 }
                 var setOrder = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == order.OrderId, include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff));
-                var amount = totalAmount;
-                if (!string.IsNullOrEmpty(orderRequest.VoucherCode))
-                {
-                    var voucher = await _uow.GetRepository<Voucher>().SingleOrDefaultAsync(predicate: v => v.VoucherCode.ToLower().Equals(orderRequest.VoucherCode.ToLower()));
-                    if (voucher == null)
-                    {
-                        return new MethodResult<Order>.Failure("Voucher not found!", StatusCodes.Status400BadRequest);
-                    }
-                    if (voucher.ExpirationDate < DateTime.Now)
-                    {
-                        return new MethodResult<Order>.Failure("Voucher not valid!", StatusCodes.Status400BadRequest);
-                    }
-                    if (voucher.MinimumOrderAmount > amount)
-                    {
-                        return new MethodResult<Order>.Failure("Not eligible to use voucher!", StatusCodes.Status400BadRequest);
-                    }
-                    var voucherUsage = new Voucherusage
-                    {
-                        VoucherId = voucher.VoucherId,
-                        OrderId = orderId,
-                        AmountUsed = voucher.DiscountType == DiscountTypeConstant.AMOUNT.ToString() ? voucher.DiscountAmount : amount * voucher.DiscountAmount,
-                        UsedAt = DateTime.Now
-                    };
-                    amount -= voucherUsage.AmountUsed;
-                    await _uow.GetRepository<Voucherusage>().InsertAsync(voucherUsage);
-                    if (await _uow.CommitAsync() <= 0)
-                    {
-                        return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
-                    }
-                }
+               
                 var transaction = new Transaction
                 {
-                    Amount = amount,
+                    Amount = totalAmount,
                     TransactionType = TransactionTypeConstant.PAY,
                     OrderId = orderId,
                     StaffId = orderRequest.StaffId,
