@@ -37,6 +37,7 @@ namespace MilkTeaPosManagement.Api.Models.ProductModel
         public IFormFile ParentImage { get; set; }
         public List<ProductSizeRequest> Sizes { get; set; } = new List<ProductSizeRequest>();
         public bool Status { get; set; } = true;
+        public List<ToppingForCreate> Toppings { get; set; } = new List<ToppingForCreate>();
 
     }
 }
