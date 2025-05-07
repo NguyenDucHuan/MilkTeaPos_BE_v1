@@ -80,8 +80,10 @@ CREATE TABLE Vouchers (
     ExpirationDate DATETIME, 
     MinimumOrderAmount DECIMAL(10, 2) DEFAULT 0, 
     Status BOOLEAN,
-    Created_at DATETIME,
-    Updated_at DATETIME
+    Create_at DATETIME,
+    Create_by INT,
+    Update_at DATETIME,
+    Update_by INT
 );
 
 
