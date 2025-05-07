@@ -9,7 +9,7 @@ namespace MilkTeaPosManagement.Api.Services.Interfaces
 {
     public interface IVoucherService
     {
-        Task<IPaginate<Voucher>?> GetVouchersByFilterAsync(VoucherSearchModel? filter);
+        Task<(long, IPaginate<Voucher>?, string?)> GetVouchersByFilterAsync(VoucherSearchModel? filter);
         Task<MethodResult<Voucher>> GetVoucherByIdAsync(int id);
         Task<MethodResult<Voucher>> CreateVoucherAsync(VoucherCreateRequestModel request);
         Task<MethodResult<Voucher>> UpdateVoucherAsync(int id, VoucherUpdateRequestModel request);

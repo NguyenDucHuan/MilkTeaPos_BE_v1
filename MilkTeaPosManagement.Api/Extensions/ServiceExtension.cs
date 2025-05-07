@@ -1,4 +1,5 @@
-﻿using MilkTeaPosManagement.Api.Services.Implements;
+﻿using MilkTeaPosManagement.Api.Models.AuthenticationModels;
+using MilkTeaPosManagement.Api.Services.Implements;
 using MilkTeaPosManagement.Api.Services.Interfaces;
 using MilkTeaPosManagement.DAL.GenericRepositories;
 using MilkTeaPosManagement.DAL.UnitOfWorks;
@@ -24,6 +25,7 @@ namespace MilkTeaPosManagement.Api.Extensions
             service.AddTransient<IProductService, ProductService>();
             service.AddTransient<IVoucherService, VoucherService>();
             service.AddTransient<ITransactionService, TransactionService>();
+            service.AddTransient<IPayOSService, PayOSService>();
             return service;
         }
     }

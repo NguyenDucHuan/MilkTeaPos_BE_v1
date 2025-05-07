@@ -29,30 +29,34 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 {
                     return new MethodResult<Transaction>.Failure("Amount paiid cannot be less than "+ transaction.Amount+"!", StatusCodes.Status400BadRequest);
                 }
-                transaction.PaymentMethodId = model.PaymentMethodId;
+                
                 if (paymrentmethod.MethodName == "Cash" && model.AmountPaid.HasValue && model.AmountPaid.Value > transaction.Amount)
                 {
+                    transaction.PaymentMethodId = model.PaymentMethodId;
                     transaction.AmountPaid = model.AmountPaid;
                     transaction.ChangeGiven = model.AmountPaid - transaction.Amount;
                     transaction.Status = true;
+                    transaction.UpdatedAt = DateTime.Now;
+                    var newStatus = new Orderstatusupdate
+                    {
+                        OrderStatus = OrderConstant.DELIVERED.ToString(),
+                        OrderId = transaction.OrderId,
+                        UpdatedAt = DateTime.Now,
+                        //AccountId = account.AccountId
+                        AccountId = transaction.StaffId
+                    };
+
+                    await _uow.GetRepository<Orderstatusupdate>().InsertAsync(newStatus);
+                    _uow.GetRepository<Transaction>().UpdateAsync(transaction);
+
+                    if (await _uow.CommitAsync() > 0)
+                    {
+                        return new MethodResult<Transaction>.Success(transaction);
+                    }
                 }                
-                transaction.UpdatedAt = DateTime.Now;
-                var newStatus = new Orderstatusupdate
+                else if (paymrentmethod.MethodName == "Transfer")
                 {
-                    OrderStatus = OrderConstant.DELIVERED.ToString(),
-                    OrderId = transaction.OrderId,
-                    UpdatedAt = DateTime.Now,
-                    //AccountId = account.AccountId
-                    AccountId = transaction.StaffId
-                };
-
-                await _uow.GetRepository<Orderstatusupdate>().InsertAsync(newStatus);
-
-                _uow.GetRepository<Transaction>().UpdateAsync(transaction);
-
-                if (await _uow.CommitAsync() > 0)
-                {
-                    return new MethodResult<Transaction>.Success(transaction);
+                    //call payos
                 }
 
                 return new MethodResult<Transaction>.Failure(
