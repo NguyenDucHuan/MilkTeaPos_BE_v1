@@ -12,10 +12,9 @@ namespace MilkTeaPosManagement.Api.Controllers
     [Route("api/order")]
     [ApiController]
     //[Authorize]
-    public class OrderController(IOrderService service, IOrderItemService orderItemService) : ControllerBase
+    public class OrderController(IOrderService service) : ControllerBase
     {
         private readonly IOrderService _service = service;
-        private readonly IOrderItemService _orderItemService = orderItemService;
         [HttpGet("")]
         public async Task<IActionResult> GetAll([FromQuery] OrderSearchModel? searchModel)
         {
@@ -34,10 +33,10 @@ namespace MilkTeaPosManagement.Api.Controllers
                     totalAmount = item.TotalAmount,
                     note = item.Note,
                     staffId = item.StaffId,
-                    staffName = item.Staff.FullName,
-                    paymentMethodId = item.PaymentMethodId,
-                    paymentMethodName = item.PaymentMethod.MethodName,
-                    orderStatus = item.Orderstatusupdates.FirstOrDefault().OrderStatus
+                    staffName = item.Staff?.FullName,
+                    voucherCode = item.Voucherusages.OrderByDescending(vu => vu.UsedAt).Take(1).FirstOrDefault()?.Voucher?.VoucherCode,
+                    orderStatus = item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus,
+                    paymentStatus = item.Transactions.OrderByDescending(t => t.UpdatedAt).Take(1).FirstOrDefault().Status.Value ? "Paid" : "Unpaid"
                 });
             }
             return Ok(new

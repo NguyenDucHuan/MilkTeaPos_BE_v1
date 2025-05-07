@@ -5,7 +5,6 @@ namespace MilkTeaPosManagement.Api.Models.OrderModels
     public class OrderSearchModel
     {
         public int? StaffId { get; set; }
-        public int? PaymentMethodId { get; set; }
         public DateTime? FromDate { get; set; }
         public DateTime? ToDate { get; set; }
         public decimal? MinPrice { get; set; }

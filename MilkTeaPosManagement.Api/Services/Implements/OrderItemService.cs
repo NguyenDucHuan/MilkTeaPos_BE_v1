@@ -10,10 +10,9 @@ using MilkTeaPosManagement.Domain.Models;
 
 namespace MilkTeaPosManagement.Api.Services.Implements
 {
-    public class OrderItemService(IUnitOfWork uow, IMapper mapper, IProductService productService) : IOrderItemService
+    public class OrderItemService(IUnitOfWork uow, IProductService productService) : IOrderItemService
     {
         private readonly IUnitOfWork _uow = uow;
-        private readonly IMapper _mapper = mapper;
         private readonly IProductService _productService = productService;
         public async Task<(ICollection<Orderitem>, List<Product>?)> GetCartAsync()
         {
@@ -96,7 +95,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
         public async Task<MethodResult<Orderitem>> AddToCart(OrderItemRequest request)
         {
             var existeds = await _uow.GetRepository<Orderitem>().GetListAsync(
-                predicate: pm => pm.ProductId == request.ProductId && pm.OrderId == null);
+                predicate: pm => pm.ProductId == request.ProductId && pm.OrderId == null && pm.MasterId == null);
             var product = await _uow.GetRepository<Product>().SingleOrDefaultAsync(predicate: pm => pm.ProductId == request.ProductId);
             if (product == null)
             {
@@ -130,7 +129,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 foreach (var existed in existeds)
                 {
-                    var existedToppings = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.MasterId == existed.OrderItemId);
+                    var existedToppings = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.MasterId == existed.OrderItemId && oi.Price > 0);
                     var existedComboItem = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.MasterId == existed.OrderItemId && oi.Price == 0);
                     var isSame = true;
                     if (existedToppings != null && request.ToppingIds!=null && request.ToppingIds.Count != existedToppings.Count)
@@ -214,7 +213,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 var orderItem = new Orderitem
                 {
                     OrderItemId = itemId,
-                    Quantity = request.Quantity,
+                    Quantity = request.Quantity * cbi.Quantity,
                     Price = 0,
                     MasterId = item.OrderItemId,
                     ProductId = cbi.ProductId,
@@ -241,35 +240,43 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 return new MethodResult<Orderitem>.Failure("Product not found!", StatusCodes.Status400BadRequest);
             }
-            var toppings = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.MasterId == existed.OrderItemId);
+            var toppings = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.MasterId == orderItemId && oi.Price > 0);
+            var comboItems = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.MasterId == orderItemId && oi.Price == 0);
 
             if (existed.Quantity > quantity)
             {
+                foreach (var item in toppings)
+                {
+                    var basePrice = item.Price / item.Quantity;
+                    item.Quantity -= quantity;
+                    item.Price -= basePrice * quantity;
+                    _uow.GetRepository<Orderitem>().UpdateAsync(item);
+                }
+                foreach (var item in comboItems)
+                {
+                    var baseQuantity = item.Quantity / existed.Quantity;
+                    item.Quantity -= quantity * baseQuantity;
+                    _uow.GetRepository<Orderitem>().UpdateAsync(item);
+                }
                 existed.Quantity -= quantity;
                 existed.Price -= product.Prize * quantity;
                 _uow.GetRepository<Orderitem>().UpdateAsync(existed);
-
-                foreach (var item in toppings)
-                {
-                    var basePrice = item.Price/item.Quantity;
-                    if (item.Quantity > quantity)
-                    {
-                        item.Quantity -= quantity;
-                        item.Price -= basePrice * quantity;
-                        _uow.GetRepository<Orderitem>().UpdateAsync(item);
-                    }
-                    else
-                    {
-                        _uow.GetRepository<Orderitem>().DeleteAsync(item);
-                    }
-                }
+                                
                 if (await _uow.CommitAsync() > 0)
                 {
                     return new MethodResult<Orderitem>.Success(existed);
                 }
             }
-            _uow.GetRepository<Orderitem>().DeleteAsync(existed);          
-            
+            _uow.GetRepository<Orderitem>().DeleteAsync(existed);    
+            foreach(var item in toppings)
+            {
+                _uow.GetRepository<Orderitem>().DeleteAsync(item);
+            }
+            foreach (var item in comboItems)
+            {
+                _uow.GetRepository<Orderitem>().DeleteAsync(item);
+            }
+
             if (await _uow.CommitAsync() > 0)
             {
                 return new MethodResult<Orderitem>.Success(existed);

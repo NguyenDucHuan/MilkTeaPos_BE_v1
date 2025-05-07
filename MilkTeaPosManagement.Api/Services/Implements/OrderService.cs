@@ -11,14 +11,14 @@ using System.IdentityModel.Tokens.Jwt;
 
 namespace MilkTeaPosManagement.Api.Services.Implements
 {
-    public class OrderService(IUnitOfWork uow, IHttpContextAccessor _httpContextAccessor) : IOrderService
+    public class OrderService(IUnitOfWork uow, IHttpContextAccessor HttpContextAccessor) : IOrderService
     {
         private readonly IUnitOfWork _uow = uow;
         public async Task<(long, IPaginate<Order>?, string?)> GetAllOrders(OrderSearchModel? search)
         {
             if (search == null)
             {
-                return (1, await _uow.GetRepository<Order>().GetPagingListAsync(page: 1, size: 10, orderBy: o => o.OrderByDescending(od => od.CreateAt)), null);
+                return (1, await _uow.GetRepository<Order>().GetPagingListAsync(include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff).Include(od => od.Orderitems).Include(od => od.Voucherusages).ThenInclude(vu => vu.Voucher).Include(od => od.Transactions).ThenInclude(t => t.PaymentMethod), page: 1, size: 10, orderBy: o => o.OrderByDescending(od => od.CreateAt)), null);
             }
             //if (search.Status != null && search.Status != OrderConstant.PENDING && search.Status != OrderConstant.SHIPPED && search.Status != OrderConstant.DELIVERED && search.Status != OrderConstant.CANCELED)
             //{
@@ -29,14 +29,8 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 return (0, null, "Staff not found");
             }
-            var payment = await _uow.GetRepository<Paymentmethod>().SingleOrDefaultAsync(predicate: pm => pm.PaymentMethodId == search.PaymentMethodId);
-            if (search.PaymentMethodId != null && payment == null)
-            {
-                return (0, null, "Payment method not found");
-            }
-            return (1, await _uow.GetRepository<Order>().GetPagingListAsync(include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff).Include(od => od.PaymentMethod).Include(od => od.Orderitems),
+            return (1, await _uow.GetRepository<Order>().GetPagingListAsync(include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff).Include(od => od.Orderitems).Include(od => od.Voucherusages).ThenInclude(vu => vu.Voucher).Include(od => od.Transactions).ThenInclude(t => t.PaymentMethod),
                                                                         predicate: o => (!search.StaffId.HasValue || o.StaffId == search.StaffId) &&
-                                                                                        (!search.PaymentMethodId.HasValue || o.PaymentMethodId == search.PaymentMethodId) &&
                                                                                         (!search.FromDate.HasValue || o.CreateAt.Value.Date >= search.FromDate.Value.Date) &&
                                                                                         (!search.ToDate.HasValue || o.CreateAt.Value.Date <= search.ToDate.Value.Date) &&
                                                                                         (!search.MinPrice.HasValue || o.TotalAmount >= search.MinPrice) &&
@@ -48,13 +42,11 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                                                                                                                                                                                                                                             : search.SortBy.ToLower().Equals("orderid") ? o.OrderBy(od => od.OrderId)
                                                                                                                                                                                                                                             : search.SortBy.ToLower().Equals("totalamount") ? o.OrderBy(od => od.TotalAmount)
                                                                                                                                                                                                                                             : search.SortBy.ToLower().Equals("staffid") ? o.OrderBy(od => od.StaffId)
-                                                                                                                                                                                                                                            : search.SortBy.ToLower().Equals("paymentmethodid") ? o.OrderBy(od => od.PaymentMethodId)
                                                                                                                                                                                                                                                                                                 : o.OrderBy(od => od.Orderstatusupdates.FirstOrDefault().OrderStatus))
                                                                                                                                                      : ((string.IsNullOrEmpty(search.SortBy) || search.SortBy.ToLower().Equals("createat")) ? o.OrderByDescending(od => od.CreateAt)
                                                                                                                                                                                                                                             : search.SortBy.ToLower().Equals("orderid") ? o.OrderByDescending(od => od.OrderId)
                                                                                                                                                                                                                                             : search.SortBy.ToLower().Equals("totalamount") ? o.OrderByDescending(od => od.TotalAmount)
                                                                                                                                                                                                                                             : search.SortBy.ToLower().Equals("staffid") ? o.OrderByDescending(od => od.StaffId)
-                                                                                                                                                                                                                                            : search.SortBy.ToLower().Equals("paymentmethodid") ? o.OrderByDescending(od => od.PaymentMethodId)
                                                                                                                                                                                                                                                                                                 : o.OrderByDescending(od => od.Orderstatusupdates.FirstOrDefault().OrderStatus)))
                                                                         ), null); 
         }
@@ -68,7 +60,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
         //}
         public async Task<(long, Order?, string?)> GetOrderDetail(int orderId)
         {
-            var order = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == orderId, include: o => o.Include(od => od.PaymentMethod).Include(od => od.Orderstatusupdates).Include(od => od.Staff).Include(od => od.Orderitems).ThenInclude(oi => oi.Product));
+            var order = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == orderId, include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff).Include(od => od.Orderitems).ThenInclude(oi => oi.Product).Include(od => od.Voucherusages).ThenInclude(vu => vu.Voucher).Include(od => od.Transactions).ThenInclude(t => t.PaymentMethod));
             if (order == null)
             {
                 return (400, null, "Order not found!");
@@ -90,11 +82,11 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             //{
             //    return new MethodResult<Order>.Failure("Login required!", StatusCodes.Status400BadRequest);
             //}
-            var paymrentmethod = await _uow.GetRepository<Paymentmethod>().SingleOrDefaultAsync(predicate: PM => PM.PaymentMethodId == orderRequest.PaymentMethodId);
-            if (paymrentmethod == null)
-            {
-                return new MethodResult<Order>.Failure("Paymentmethod not valid!", StatusCodes.Status400BadRequest);
-            }
+            //var paymrentmethod = await _uow.GetRepository<Paymentmethod>().SingleOrDefaultAsync(predicate: PM => PM.PaymentMethodId == orderRequest.PaymentMethodId);
+            //if (paymrentmethod == null)
+            //{
+            //    return new MethodResult<Order>.Failure("Paymentmethod not valid!", StatusCodes.Status400BadRequest);
+            //}
             if (account == null)
             {
                 return new MethodResult<Order>.Failure("Login required!", StatusCodes.Status400BadRequest);
@@ -113,7 +105,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 Note = orderRequest.Note,
                 StaffId = orderRequest.StaffId,
                 //StaffId = account.AccountId,
-                PaymentMethodId = orderRequest.PaymentMethodId
+                //PaymentMethodId = orderRequest.PaymentMethodId
             };
             
             await _uow.GetRepository<Order>().InsertAsync(order);
@@ -141,12 +133,57 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     AccountId = orderRequest.StaffId,
                 };
                 await _uow.GetRepository<Orderstatusupdate>().InsertAsync(orderStatus);
-                if (await _uow.CommitAsync() > 0)
+                if (await _uow.CommitAsync() <= 0)
                 {
-                    var setOrder = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == order.OrderId, include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff).Include(od => od.PaymentMethod));
-                    return new MethodResult<Order>.Success(setOrder);
+                    return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
                 }
-                return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
+                var setOrder = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == order.OrderId, include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff));
+                var amount = totalAmount;
+                if (!string.IsNullOrEmpty(orderRequest.VoucherCode))
+                {
+                    var voucher = await _uow.GetRepository<Voucher>().SingleOrDefaultAsync(predicate: v => v.VoucherCode.ToLower().Equals(orderRequest.VoucherCode.ToLower()));
+                    if (voucher == null)
+                    {
+                        return new MethodResult<Order>.Failure("Voucher not found!", StatusCodes.Status400BadRequest);
+                    }
+                    if (voucher.ExpirationDate < DateTime.Now)
+                    {
+                        return new MethodResult<Order>.Failure("Voucher not valid!", StatusCodes.Status400BadRequest);
+                    }
+                    if (voucher.MinimumOrderAmount > amount)
+                    {
+                        return new MethodResult<Order>.Failure("Not eligible to use voucher!", StatusCodes.Status400BadRequest);
+                    }
+                    var voucherUsage = new Voucherusage
+                    {
+                        VoucherId = voucher.VoucherId,
+                        OrderId = orderId,
+                        AmountUsed = voucher.DiscountType == DiscountTypeConstant.AMOUNT.ToString() ? voucher.DiscountAmount : amount * voucher.DiscountAmount,
+                        UsedAt = DateTime.Now
+                    };
+                    amount -= voucherUsage.AmountUsed;
+                    await _uow.GetRepository<Voucherusage>().InsertAsync(voucherUsage);
+                    if (await _uow.CommitAsync() <= 0)
+                    {
+                        return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
+                    }
+                }
+                var transaction = new Transaction
+                {
+                    Amount = amount,
+                    TransactionType = TransactionTypeConstant.PAY,
+                    OrderId = orderId,
+                    StaffId = orderRequest.StaffId,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                    Status = false
+                };
+                await _uow.GetRepository<Transaction>().InsertAsync(transaction);
+                if (await _uow.CommitAsync() <= 0)
+                {
+                    return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
+                }
+                return new MethodResult<Order>.Success(setOrder);
             }
 
             return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
@@ -232,32 +269,32 @@ namespace MilkTeaPosManagement.Api.Services.Implements
 
         }
 
-        public async Task<Account?> GetCurrentUser()
-        {
-            var httpContext = _httpContextAccessor.HttpContext;
-            if (httpContext != null && httpContext.Request.Headers.ContainsKey("Authorization"))
-            {
-                var token = httpContext.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-                if (token == "null")
-                {
-                    return null;
-                }
-                if (!string.IsNullOrEmpty(token))
-                {
-                    var handler = new JwtSecurityTokenHandler();
-                    var jwtToken = handler.ReadJwtToken(token);
-                    var idClaim = jwtToken.Claims.FirstOrDefault(claim => claim.Type == "sid");
-                    if (idClaim != null)
-                    {
-                        var account = await _uow.GetRepository<Account>().SingleOrDefaultAsync(predicate: a => a.AccountId.ToString().Equals(idClaim.Value));
-                        if (account != null)
-                        {
-                            return account;
-                        }
-                    }
-                }
-            }
-            return null;
-        }
+        //public async Task<Account?> GetCurrentUser()
+        //{
+        //    var httpContext = _httpContextAccessor.HttpContext;
+        //    if (httpContext != null && httpContext.Request.Headers.ContainsKey("Authorization"))
+        //    {
+        //        var token = httpContext.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+        //        if (token == "null")
+        //        {
+        //            return null;
+        //        }
+        //        if (!string.IsNullOrEmpty(token))
+        //        {
+        //            var handler = new JwtSecurityTokenHandler();
+        //            var jwtToken = handler.ReadJwtToken(token);
+        //            var idClaim = jwtToken.Claims.FirstOrDefault(claim => claim.Type == "sid");
+        //            if (idClaim != null)
+        //            {
+        //                var account = await _uow.GetRepository<Account>().SingleOrDefaultAsync(predicate: a => a.AccountId.ToString().Equals(idClaim.Value));
+        //                if (account != null)
+        //                {
+        //                    return account;
+        //                }
+        //            }
+        //        }
+        //    }
+        //    return null;
+        //}
     }
 }
