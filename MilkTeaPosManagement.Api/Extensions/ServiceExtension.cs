@@ -1,4 +1,5 @@
-﻿using MilkTeaPosManagement.Api.Services.Implements;
+﻿using MilkTeaPosManagement.Api.Models.AuthenticationModels;
+using MilkTeaPosManagement.Api.Services.Implements;
 using MilkTeaPosManagement.Api.Services.Interfaces;
 using MilkTeaPosManagement.DAL.GenericRepositories;
 using MilkTeaPosManagement.DAL.UnitOfWorks;
