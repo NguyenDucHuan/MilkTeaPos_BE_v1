@@ -5,7 +5,6 @@ using MilkTeaPosManagement.Api.Models.CategoryModels;
 using MilkTeaPosManagement.Api.Models.VoucherMethod;
 using MilkTeaPosManagement.Api.Services.Implements;
 using MilkTeaPosManagement.Api.Services.Interfaces;
-using MilkTeaPosManagement.Domain.Models;
 
 namespace MilkTeaPosManagement.Api.Controllers
 {
@@ -18,34 +17,9 @@ namespace MilkTeaPosManagement.Api.Controllers
         public async Task<IActionResult> GetVouchers([FromQuery] VoucherSearchModel? filter)
         {            
             var vouchers = await _service.GetVouchersByFilterAsync(filter);
-            if (vouchers.Item2 == null)
-            {
-                return Ok(new Voucher());
-            }
-            var resp = new List<object>();
-            foreach (var item in vouchers.Item2.Items)
-            {
-                resp.Add(new
-                {
-                    voucherId = item.VoucherId,
-                    voucherCode = item.VoucherCode,
-                    discountAmount = item.DiscountAmount,
-                    discountType = item.DiscountType,
-                    expirationDate = item.ExpirationDate,
-                    minimumOrderAmount = item.MinimumOrderAmount,
-                    status = item.Status
-                });
-            }
-            return Ok(new
-            {
-                size = vouchers.Item2?.Size,
-                page = vouchers.Item2?.Page,
-                total = vouchers.Item2?.Total,
-                totalPages = vouchers.Item2?.TotalPages,
-                items = resp
-            });
+            return Ok(vouchers);
         }
-        [HttpGet("{id}")]
+        [HttpGet("/{id}")]
         public async Task<IActionResult> GetVoucherById([FromRoute] int id)
         {
             var result = await _service.GetVoucherByIdAsync(id);

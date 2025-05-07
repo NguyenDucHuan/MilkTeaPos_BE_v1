@@ -15,36 +15,32 @@ namespace MilkTeaPosManagement.Api.Services.Implements
     {
         private readonly IUnitOfWork _uow = uow;
 
-        public async Task<(long, IPaginate<Voucher>?, string?)> GetVouchersByFilterAsync(VoucherSearchModel? filter)
+        public async Task<IPaginate<Voucher>?> GetVouchersByFilterAsync(VoucherSearchModel? filter)
         {
-            if (filter != null)
+            if (filter == null)
             {
-                return (1, await _uow.GetRepository<Voucher>().GetPagingListAsync(predicate: v => 
-                                                                                          //(!string.IsNullOrEmpty(filter.VoucherCode) || v.VoucherCode.ToLower().Contains(filter.VoucherCode.ToLower())) &&
+                return await _uow.GetRepository<Voucher>().GetPagingListAsync(page: 1, size: 10, orderBy: o => o.OrderByDescending(v => v.CreatedAt));
+            }
+            return await _uow.GetRepository<Voucher>().GetPagingListAsync(predicate: v => (!string.IsNullOrEmpty(filter.VoucherCode) || v.VoucherCode.ToLower().Contains(filter.VoucherCode.ToLower())) &&
                                                                                           (!filter.MinDiscountAmount.HasValue || v.DiscountAmount > filter.MinDiscountAmount) &&
                                                                                           (!filter.MaxDiscountAmount.HasValue || v.DiscountAmount < filter.MaxDiscountAmount) &&
-                                                                                          //(!string.IsNullOrEmpty(filter.DiscountType) || v.DiscountType.ToLower().Equals(filter.DiscountType.ToLower()))) &&
+                                                                                          (!string.IsNullOrEmpty(filter.DiscountType) || v.DiscountType.ToLower().Contains(filter.DiscountType.ToLower())) &&
                                                                                           (!filter.FromDate.HasValue || v.ExpirationDate > filter.FromDate) &&
                                                                                           (!filter.ToDate.HasValue || v.ExpirationDate < filter.ToDate),
                                                                          page: filter.Page.HasValue ? (int)filter.Page : 1,
                                                                          size: filter.PageSize.HasValue ? (int)filter.PageSize : 10,
-                                                                         orderBy: o => (filter.SortAscending.HasValue && filter.SortAscending.Value) ? ((string.IsNullOrEmpty(filter.SortBy) || filter.SortBy.ToLower().Equals("createat")) ? o.OrderBy(od => od.CreatedAt)
+                                                                         orderBy: o => ((filter.SortAscending.HasValue && filter.SortAscending.Value) ? ((string.IsNullOrEmpty(filter.SortBy) || filter.SortBy.ToLower().Equals("createat")) ? o.OrderBy(od => od.CreatedAt)
                                                                                                                                                                                                                                             : filter.SortBy.ToLower().Equals("vouchercode") ? o.OrderBy(od => od.VoucherCode)
                                                                                                                                                                                                                                             : filter.SortBy.ToLower().Equals("discountamount") ? o.OrderBy(od => od.DiscountAmount)
                                                                                                                                                                                                                                             : filter.SortBy.ToLower().Equals("discounttype") ? o.OrderBy(od => od.DiscountType)
                                                                                                                                                                                                                                             : filter.SortBy.ToLower().Equals("expirationdate") ? o.OrderBy(od => od.ExpirationDate)
                                                                                                                                                                                                                                                                                                 : o.OrderBy(od => od.MinimumOrderAmount))
-                                                                                                                                                     : (string.IsNullOrEmpty(filter.SortBy) || filter.SortBy.ToLower().Equals("createat") ? o.OrderByDescending(od => od.CreatedAt)
+                                                                                                                                                     : ((string.IsNullOrEmpty(filter.SortBy) || filter.SortBy.ToLower().Equals("createat")) ? o.OrderBy(od => od.CreatedAt)
                                                                                                                                                                                                                                             : filter.SortBy.ToLower().Equals("vouchercode") ? o.OrderByDescending(od => od.VoucherCode)
                                                                                                                                                                                                                                             : filter.SortBy.ToLower().Equals("discountamount") ? o.OrderByDescending(od => od.DiscountAmount)
                                                                                                                                                                                                                                             : filter.SortBy.ToLower().Equals("discounttype") ? o.OrderByDescending(od => od.DiscountType)
                                                                                                                                                                                                                                             : filter.SortBy.ToLower().Equals("expirationdate") ? o.OrderByDescending(od => od.ExpirationDate)
-                                                                                                                                                                                                                                            : o.OrderByDescending(od => od.MinimumOrderAmount)))
-                    ,null);
-
-
-            }
-            return (1, await _uow.GetRepository<Voucher>().GetPagingListAsync(page: 1, size: 10, orderBy: o => o.OrderByDescending(v => v.CreatedAt)), null);                                                                                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                                : o.OrderByDescending(od => od.MinimumOrderAmount))));
         }
         public async Task<MethodResult<Voucher>> GetVoucherByIdAsync(int id)
         {
@@ -74,18 +70,18 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         StatusCodes.Status400BadRequest
                     );
                 }
-                if (request.DiscountType.ToLower() != DiscountTypeConstant.AMOUNT.ToString().ToLower() && request.DiscountType.ToLower() != DiscountTypeConstant.PERCENTAGE.ToString().ToLower())
+                if (request.DiscountType != DiscountTypeConstant.AMOUNT.ToString() && request.DiscountType != DiscountTypeConstant.PERCENTAGE.ToString())
                 {
                     return new MethodResult<Voucher>.Failure("Discount type must be 'Amount' or 'Percentage'", StatusCodes.Status400BadRequest);
                 }
-                if (request.DiscountType.ToLower() != DiscountTypeConstant.AMOUNT.ToString().ToLower() && request.DiscountAmount < 1)
+                if (request.DiscountType == DiscountTypeConstant.AMOUNT.ToString() && request.DiscountAmount < 1)
                 {
                     return new MethodResult<Voucher>.Failure(
                         "Discount amount must be more than 1",
                         StatusCodes.Status400BadRequest
                     );
                 }
-                if (request.DiscountType.ToLower() != DiscountTypeConstant.PERCENTAGE.ToString().ToLower() && request.DiscountAmount > 1)
+                if (request.DiscountType == DiscountTypeConstant.PERCENTAGE.ToString() && request.DiscountAmount > 1)
                 {
                     return new MethodResult<Voucher>.Failure(
                         "Discount percent must be less than 1",
@@ -120,7 +116,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
 
                 return new MethodResult<Voucher>.Failure(
                     "Failed to create voucher",
-                    StatusCodes.Status400BadRequest
+                    StatusCodes.Status500InternalServerError
                 );
             }
             catch (Exception ex)
@@ -146,18 +142,18 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         StatusCodes.Status404NotFound
                     );
                 }
-                if (!string.IsNullOrEmpty(request.DiscountType) && request.DiscountType.ToLower() != DiscountTypeConstant.AMOUNT.ToString().ToLower() && request.DiscountType.ToLower() != DiscountTypeConstant.PERCENTAGE.ToString().ToLower())
+                if (!string.IsNullOrEmpty(request.DiscountType) && request.DiscountType != DiscountTypeConstant.AMOUNT.ToString() && request.DiscountType != DiscountTypeConstant.PERCENTAGE.ToString())
                 {
                     return new MethodResult<Voucher>.Failure("Discount type must be 'Amount' or 'Percentage'", StatusCodes.Status400BadRequest);
                 }
-                if (!string.IsNullOrEmpty(request.DiscountType) && request.DiscountAmount.HasValue && request.DiscountType.ToLower() != DiscountTypeConstant.AMOUNT.ToString().ToLower() && request.DiscountAmount < 1)
+                if (!string.IsNullOrEmpty(request.DiscountType) && request.DiscountAmount.HasValue && request.DiscountType == DiscountTypeConstant.AMOUNT.ToString() && request.DiscountAmount < 1)
                 {
                     return new MethodResult<Voucher>.Failure(
                         "Discount amount must be more than 1",
                         StatusCodes.Status400BadRequest
                     );
                 }
-                if (!string.IsNullOrEmpty(request.DiscountType) && request.DiscountAmount.HasValue && request.DiscountType.ToLower() != DiscountTypeConstant.PERCENTAGE.ToString().ToLower() && request.DiscountAmount > 1)
+                if (!string.IsNullOrEmpty(request.DiscountType) && request.DiscountAmount.HasValue && request.DiscountType == DiscountTypeConstant.PERCENTAGE.ToString() && request.DiscountAmount > 1)
                 {
                     return new MethodResult<Voucher>.Failure(
                         "Discount percent must be less than 1",

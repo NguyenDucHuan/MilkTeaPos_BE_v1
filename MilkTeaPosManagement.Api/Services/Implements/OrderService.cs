@@ -11,7 +11,7 @@ using System.IdentityModel.Tokens.Jwt;
 
 namespace MilkTeaPosManagement.Api.Services.Implements
 {
-    public class OrderService(IUnitOfWork uow) : IOrderService
+    public class OrderService(IUnitOfWork uow, IHttpContextAccessor HttpContextAccessor) : IOrderService
     {
         private readonly IUnitOfWork _uow = uow;
         public async Task<(long, IPaginate<Order>?, string?)> GetAllOrders(OrderSearchModel? search)
@@ -95,11 +95,11 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 totalAmount += item.Price;
             }
-            //var orders = await _uow.GetRepository<Order>().GetListAsync();
-            //var orderId = orders != null && orders.Count > 0 ? orders.Last().OrderId + 1 : 1;
+            var orders = await _uow.GetRepository<Order>().GetListAsync();
+            var orderId = orders != null && orders.Count > 0 ? orders.Last().OrderId + 1 : 1;
             var order = new Order
             {
-                //OrderId = orderId,
+                OrderId = orderId,
                 TotalAmount = totalAmount,
                 CreateAt = DateTime.Now,
                 Note = orderRequest.Note,
@@ -114,8 +114,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 foreach (var item in orderItems)
                 {
-                    //item.OrderId = orderId;
-                    item.OrderId = order.OrderId;
+                    item.OrderId = orderId;
                     _uow.GetRepository<Orderitem>().UpdateAsync(item);
                 }
                 if (await _uow.CommitAsync() <= 0)
@@ -126,9 +125,9 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 var statusId = status != null && status.Count > 0 ? status.Last().OrderStatusUpdateId + 1 : 1;
                 var orderStatus = new Orderstatusupdate
                 {
-                   // OrderStatusUpdateId = statusId,
+                    OrderStatusUpdateId = statusId,
                     OrderStatus = OrderConstant.PENDING.ToString(),
-                    OrderId = order.OrderId,
+                    OrderId = orderId,
                     UpdatedAt = DateTime.Now,
                     //AccountId = account.AccountId
                     AccountId = orderRequest.StaffId,
@@ -158,7 +157,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     var voucherUsage = new Voucherusage
                     {
                         VoucherId = voucher.VoucherId,
-                        OrderId = order.OrderId,
+                        OrderId = orderId,
                         AmountUsed = voucher.DiscountType == DiscountTypeConstant.AMOUNT.ToString() ? voucher.DiscountAmount : amount * voucher.DiscountAmount,
                         UsedAt = DateTime.Now
                     };
@@ -173,8 +172,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 {
                     Amount = amount,
                     TransactionType = TransactionTypeConstant.PAY,
-                    //OrderId = orderId,
-                    OrderId = order.OrderId,
+                    OrderId = orderId,
                     StaffId = orderRequest.StaffId,
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now,
