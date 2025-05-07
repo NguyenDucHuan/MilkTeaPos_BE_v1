@@ -19,9 +19,17 @@ public partial class Voucher
 
     public bool? Status { get; set; }
 
-    public DateTime? CreatedAt { get; set; }
+    public DateTime? CreateAt { get; set; }
 
-    public DateTime? UpdatedAt { get; set; }
+    public int? CreateBy { get; set; }
+
+    public DateTime? UpdateAt { get; set; }
+
+    public int? UpdateBy { get; set; }
+
+    public DateTime? DisableAt { get; set; }
+
+    public int? DisableBy { get; set; }
 
     public virtual ICollection<Voucherusage> Voucherusages { get; set; } = new List<Voucherusage>();
 }
