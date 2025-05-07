@@ -76,18 +76,18 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         StatusCodes.Status400BadRequest
                     );
                 }
-                if (request.DiscountType != DiscountTypeConstant.AMOUNT.ToString() && request.DiscountType != DiscountTypeConstant.PERCENTAGE.ToString())
+                if (request.DiscountType.ToUpper() != DiscountTypeConstant.AMOUNT.ToString() && request.DiscountType.ToUpper() != DiscountTypeConstant.PERCENTAGE.ToString())
                 {
                     return new MethodResult<VoucherResponse>.Failure("Discount type must be 'Amount' or 'Percentage'", StatusCodes.Status400BadRequest);
                 }
-                if (request.DiscountType == DiscountTypeConstant.AMOUNT.ToString() && request.DiscountAmount < 1)
+                if (request.DiscountType.ToUpper() == DiscountTypeConstant.AMOUNT.ToString() && request.DiscountAmount < 1)
                 {
                     return new MethodResult<VoucherResponse>.Failure(
                         "Discount amount must be more than 1",
                         StatusCodes.Status400BadRequest
                     );
                 }
-                if (request.DiscountType == DiscountTypeConstant.PERCENTAGE.ToString() && request.DiscountAmount > 1)
+                if (request.DiscountType.ToUpper() == DiscountTypeConstant.PERCENTAGE.ToString() && request.DiscountAmount > 1)
                 {
                     return new MethodResult<VoucherResponse>.Failure(
                         "Discount percent must be less than 1",
@@ -149,7 +149,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         StatusCodes.Status404NotFound
                     );
                 }
-                if (!string.IsNullOrEmpty(request.DiscountType) && request.DiscountType != DiscountTypeConstant.AMOUNT.ToString() && request.DiscountType != DiscountTypeConstant.PERCENTAGE.ToString())
+                if (!string.IsNullOrEmpty(request.DiscountType) && request.DiscountType.ToUpper() != DiscountTypeConstant.AMOUNT.ToString() && request.DiscountType.ToUpper() != DiscountTypeConstant.PERCENTAGE.ToString())
                 {
                     return new MethodResult<VoucherResponse>.Failure("Discount type must be 'Amount' or 'Percentage'", StatusCodes.Status400BadRequest);
                 }
