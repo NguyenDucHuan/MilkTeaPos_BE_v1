@@ -6,6 +6,7 @@ using MilkTeaPosManagement.Api.Models.PaymentMethodModels;
 using MilkTeaPosManagement.Api.Services.Interfaces;
 using MilkTeaPosManagement.Domain.Models;
 using MilkTeaPosManagement.Domain.Paginate;
+using System.Security.Claims;
 
 namespace MilkTeaPosManagement.Api.Controllers
 {
@@ -108,7 +109,12 @@ namespace MilkTeaPosManagement.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> Add([FromBody] OrderRequest request)
         {
-            var result = await _service.CreateOrder(request);
+            var userIdString = User.FindFirst(ClaimTypes.Sid)?.Value;
+            if (!int.TryParse(userIdString, out var userId))
+            {
+                return BadRequest("Invalid user ID.");
+            }
+            var result = await _service.CreateOrder(request, userId);
             return result.Match(
                 (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
                 Ok
