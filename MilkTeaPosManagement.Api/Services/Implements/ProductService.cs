@@ -382,9 +382,6 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 .Where(p => p.ProductType == ProductConstant.PRODUCT_TYPE_COMBO)
                 .ToList();
 
-            var extraProducts = products
-                .Where(p => p.ProductType == ProductConstant.PRODUCT_TYPE_EXTRA_PRODUCT)
-                .ToList();
 
             if (masterProducts.Any())
             {
@@ -401,6 +398,28 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     master.Variants = sizeProducts
                         .Where(s => s.ParentId == master.ProductId)
                         .ToList();
+                }
+                var toppingProducts = await _uow.GetRepository<Toppingforproduct>().GetListAsync(
+                    selector: t => _mapper.Map<ProductTopping>(t),
+                    predicate: t => masterIds.Contains(t.ProductId),
+                    include: q => q.Include(t => t.Product)
+                );
+                foreach (var master in masterProducts)
+                {
+                    var toppings = toppingProducts
+                        .Where(t => t.ProductId == master.ProductId)
+                        .ToList();
+                    foreach (var topping in toppings)
+                    {
+                        var product = await _uow.GetRepository<Product>().SingleOrDefaultAsync(
+                            predicate: p => p.ProductId == topping.ToppingId
+                        );
+                        if (product != null)
+                        {
+                            master.Toppings.Add(topping);
+                        }
+                    }
+
                 }
             }
             if (comboProducts.Any())
@@ -426,23 +445,6 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                             .ToList();
 
                         combo.ComboItems.Add(mainItem);
-                    }
-                }
-            }
-            if (extraProducts.Any())
-            {
-                var extraIds = extraProducts.Select(p => p.ProductId).ToList();
-                var extraItems = await _uow.GetRepository<Toppingforproduct>().GetListAsync(
-                    selector: c => _mapper.Map<ProductTopping>(c),
-                    predicate: c => extraIds.Contains(c.ToppingId),
-                    include: q => q.Include(c => c.Product)
-                );
-                foreach (var extra in extraItems)
-                {
-                    var product = products.FirstOrDefault(p => p.ProductId == extra.ProductId);
-                    if (product != null)
-                    {
-                        product.Toppings.Add(extra);
                     }
                 }
             }
