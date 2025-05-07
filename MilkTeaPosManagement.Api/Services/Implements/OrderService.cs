@@ -114,9 +114,9 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 {
                     return new MethodResult<Order>.Failure("Not eligible to use voucher!", StatusCodes.Status400BadRequest);
                 }
-                
-                
-                totalAmount -= voucher.DiscountType.ToUpper() == DiscountTypeConstant.AMOUNT.ToString() ? voucher.DiscountAmount : totalAmount * voucher.DiscountAmount;
+                var desc = voucher.DiscountType.ToUpper() == DiscountTypeConstant.AMOUNT.ToString() ? voucher.DiscountAmount : totalAmount * voucher.DiscountAmount;
+
+                totalAmount = desc > totalAmount ? 0 : totalAmount - desc;
             }
             var order = new Order
             {
