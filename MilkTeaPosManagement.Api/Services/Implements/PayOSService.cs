@@ -125,7 +125,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             }
             var orderStatus = new Orderstatusupdate
             {
-                OrderStatus = OrderConstant.CANCELED.ToString(),
+                OrderStatus = OrderConstant.CANCELLED.ToString(),
                 OrderId = orderCode,
                 UpdatedAt = DateTime.Now,
                 AccountId = order.StaffId,
@@ -201,7 +201,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 {
                     var orderStatus = new Orderstatusupdate
                     {
-                        OrderStatus = OrderConstant.CANCELED.ToString(),
+                        OrderStatus = OrderConstant.CANCELLED.ToString(),
                         OrderId = orderCode,
                         UpdatedAt = DateTime.Now,
                         AccountId = order.StaffId,

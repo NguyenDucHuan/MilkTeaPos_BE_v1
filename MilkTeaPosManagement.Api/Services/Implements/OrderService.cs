@@ -8,18 +8,21 @@ using MilkTeaPosManagement.Api.Services.Interfaces;
 using MilkTeaPosManagement.DAL.UnitOfWorks;
 using MilkTeaPosManagement.Domain.Models;
 using MilkTeaPosManagement.Domain.Paginate;
+using Net.payOS;
+using Net.payOS.Types;
 using System.IdentityModel.Tokens.Jwt;
 
 namespace MilkTeaPosManagement.Api.Services.Implements
 {
-    public class OrderService(IUnitOfWork uow, IHttpContextAccessor HttpContextAccessor) : IOrderService
+    public class OrderService(IUnitOfWork uow, IConfiguration configuration) : IOrderService
     {
         private readonly IUnitOfWork _uow = uow;
+        private readonly IConfiguration _configuration = configuration;
         public async Task<(long, IPaginate<Order>?, string?)> GetAllOrders(OrderSearchModel? search)
         {
             if (search == null)
             {
-                return (1, await _uow.GetRepository<Order>().GetPagingListAsync(include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff).Include(od => od.Orderitems).Include(od => od.Voucherusages).ThenInclude(vu => vu.Voucher).Include(od => od.Transactions).ThenInclude(t => t.PaymentMethod), page: 1, size: 10, orderBy: o => o.OrderByDescending(od => od.CreateAt)), null);
+                return (4, await _uow.GetRepository<Order>().GetPagingListAsync(include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff).Include(od => od.Orderitems).Include(od => od.Voucherusages).ThenInclude(vu => vu.Voucher).Include(od => od.Transactions).ThenInclude(t => t.PaymentMethod), page: 1, size: 10, orderBy: o => o.OrderByDescending(od => od.CreateAt)), null);
             }
             //if (search.Status != null && search.Status != OrderConstant.PENDING && search.Status != OrderConstant.SHIPPED && search.Status != OrderConstant.DELIVERED && search.Status != OrderConstant.CANCELED)
             //{
@@ -30,7 +33,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 return (0, null, "Staff not found");
             }
-            return (1, await _uow.GetRepository<Order>().GetPagingListAsync(include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff).Include(od => od.Orderitems).Include(od => od.Voucherusages).ThenInclude(vu => vu.Voucher).Include(od => od.Transactions).ThenInclude(t => t.PaymentMethod),
+            var list = await _uow.GetRepository<Order>().GetPagingListAsync(include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff).Include(od => od.Orderitems).Include(od => od.Voucherusages).ThenInclude(vu => vu.Voucher).Include(od => od.Transactions).ThenInclude(t => t.PaymentMethod),
                                                                         predicate: o => (!search.StaffId.HasValue || o.StaffId == search.StaffId) &&
                                                                                         (!search.FromDate.HasValue || o.CreateAt.Value.Date >= search.FromDate.Value.Date) &&
                                                                                         (!search.ToDate.HasValue || o.CreateAt.Value.Date <= search.ToDate.Value.Date) &&
@@ -49,7 +52,77 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                                                                                                                                                                                                                                             : search.SortBy.ToLower().Equals("totalamount") ? o.OrderByDescending(od => od.TotalAmount)
                                                                                                                                                                                                                                             : search.SortBy.ToLower().Equals("staffid") ? o.OrderByDescending(od => od.StaffId)
                                                                                                                                                                                                                                                                                                 : o.OrderByDescending(od => od.Orderstatusupdates.FirstOrDefault().OrderStatus)))
-                                                                        ), null); 
+                                                                        );
+            var clientId = _configuration["payOS:ClientId"];
+            if (clientId == null)
+            {
+                return (1, null, "ClientId not found"); //ClientId not found
+            }
+            var apiKey = _configuration["payOS:ApiKey"];
+            if (apiKey == null)
+            {
+                return (2, null, "APIKEY not found"); //ApiKey not found
+            }
+            var checksumKey = _configuration["payOS:ChecksumKey"];
+            if (checksumKey == null)
+            {
+                return (3, null, "ChecksumKey not found"); //ChecksumKey not found
+            }
+
+            PayOS _payOS = new(clientId, apiKey, checksumKey);
+            foreach (var item in list.Items)
+            {
+                if (item.Transactions.FirstOrDefault() != null && item.Transactions.FirstOrDefault()?.PaymentMethodId == 3)
+                {
+                    PaymentLinkInformation paymentLinkInformation = await _payOS.getPaymentLinkInformation(item.OrderId);
+                    if (paymentLinkInformation.status == "CANCELLED" && (item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "Delivered" || item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "Pending"))
+                    {
+                        var stt = OrderConstant.CANCELLED.ToString();
+                        var orderStatus = new Orderstatusupdate
+                        {
+                            OrderStatus = stt[..1].ToUpper()+stt.Substring(1).ToLower(),
+                            OrderId = item.OrderId,
+                            UpdatedAt = DateTime.Now,
+                            AccountId = item.StaffId,
+                        };
+
+                        await _uow.GetRepository<Orderstatusupdate>().InsertAsync(orderStatus);
+                        var transaction = item.Transactions.FirstOrDefault();
+                        transaction.Status = false;                        
+                        transaction.TransactionDate = DateTime.Now;
+                        transaction.UpdatedAt = DateTime.Now;
+                        
+                        _uow.GetRepository<Domain.Models.Transaction>().UpdateAsync(transaction);
+                        if (await _uow.CommitAsync() <= 0)
+                        {
+                            return (4, null, "Cannot update statuses"); //fail
+                        }
+                    } else if (paymentLinkInformation.status == "PAID" && (item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "Delivered" || item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "Pending"))
+                    {
+                        var stt = OrderConstant.SUCCESS.ToString();
+                        var orderStatus = new Orderstatusupdate
+                        {
+                            OrderStatus = stt[..1].ToUpper() + stt.Substring(1).ToLower(),
+                            OrderId = item.OrderId,
+                            UpdatedAt = DateTime.Now,
+                            AccountId = item.StaffId,
+                        };
+
+                        await _uow.GetRepository<Orderstatusupdate>().InsertAsync(orderStatus);
+                        var transaction = item.Transactions.FirstOrDefault();
+                        transaction.Status = true;
+                        transaction.TransactionDate = DateTime.Now;
+                        transaction.UpdatedAt = DateTime.Now;
+
+                        _uow.GetRepository<Domain.Models.Transaction>().UpdateAsync(transaction);
+                        if (await _uow.CommitAsync() <= 0)
+                        {
+                            return (4, null, "Cannot update statuses"); //fail
+                        }
+                    }
+                }
+            }
+            return (4, list, null); 
         }
         //public async Task<IPaginate<Order>> GetOrdersByStaffId(int staffId)
         //{
@@ -188,7 +261,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     }
                 }
                 
-                var transaction = new Transaction
+                var transaction = new Domain.Models.Transaction
                 {
                     Amount = totalAmount,
                     TransactionType = TransactionTypeConstant.PAY,
@@ -198,7 +271,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     UpdatedAt = DateTime.Now,
                     Status = false
                 };
-                await _uow.GetRepository<Transaction>().InsertAsync(transaction);
+                await _uow.GetRepository<Domain.Models.Transaction>().InsertAsync(transaction);
                 if (await _uow.CommitAsync() <= 0)
                 {
                     return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
@@ -231,7 +304,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             var newStatus = new Orderstatusupdate
             {
                 OrderStatusUpdateId = statusId,
-                OrderStatus = OrderConstant.CANCELED.ToString(),
+                OrderStatus = OrderConstant.CANCELLED.ToString(),
                 OrderId = orderId,
                 UpdatedAt = DateTime.Now,
                 //AccountId = account.AccountId

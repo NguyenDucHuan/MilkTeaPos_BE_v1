@@ -53,7 +53,7 @@ namespace MilkTeaPosManagement.Api.Controllers
                 0 => BadRequest("ClientId not found"),
                 1 => BadRequest("ApiKey not found"),
                 2 => BadRequest("ChecksumKey not found"),
-                3 => Ok("Payment success"),
+                5 => Ok("Payment success"),
                 _ => Ok("Payment fail")
             };
         }
