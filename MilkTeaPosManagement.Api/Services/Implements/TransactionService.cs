@@ -110,7 +110,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     PaymentData paymentData = new(
                         orderCode: (int)transaction.OrderId,
                         amount: (int)order.TotalAmount,
-                        description: "Thanh toan hoa don",
+                        description: "Thanh toan hoa don #"+transaction.OrderId ,
                         items: items,
                         cancelUrl: "http://localhost:5173",
                         returnUrl: "http://localhost:5173",
