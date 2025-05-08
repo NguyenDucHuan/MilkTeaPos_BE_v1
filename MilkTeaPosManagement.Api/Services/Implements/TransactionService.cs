@@ -50,7 +50,6 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     transaction.UpdatedAt = DateTime.Now;
                     var newStatus = new Orderstatusupdate
                     {
-                        OrderStatus = OrderConstant.DELIVERED.ToString(),
                         OrderId = transaction.OrderId,
                         UpdatedAt = DateTime.Now,
                         //AccountId = account.AccountId

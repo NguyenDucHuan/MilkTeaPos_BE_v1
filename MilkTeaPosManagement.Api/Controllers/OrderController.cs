@@ -120,23 +120,51 @@ namespace MilkTeaPosManagement.Api.Controllers
                 Ok
             );
         }
-        [HttpDelete("cancel-order")]
-        public async Task<IActionResult> Delete([FromBody] int orderId)
+        [HttpPut("change-status/{orderId}")]
+        public async Task<IActionResult> Delete([FromRoute] int orderId, int statusId)
         {
-            var result = await _service.CancelOrder(orderId);
+            var result = await _service.CancelOrder(orderId, statusId);
             return result.Match(
                 (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
                 Ok
             );
         }
-        [HttpPut("confirm-order")]
-        public async Task<IActionResult> Update([FromBody] int orderId)
+        //[HttpPut("confirm-order")]
+        //public async Task<IActionResult> Update([FromBody] int orderId)
+        //{
+        //    var result = await _service.ConfirmOrder(orderId);
+        //    return result.Match(
+        //        (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
+        //        Ok
+        //    );
+        //}
+        [HttpGet("order-status")]
+        public async Task<IActionResult> GetStatus()
         {
-            var result = await _service.ConfirmOrder(orderId);
-            return result.Match(
-                (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
-                Ok
-            );
+            var status = new List<object>
+            {
+                new
+                {
+                    statusId = 0,
+                    statusName = "Pending"
+                },
+                new
+                {
+                    statusId = 1,
+                    statusName = "Preparing"
+                },
+                new
+                {
+                    statusId = 2,
+                    statusName = "Success"
+                },
+                new
+                {
+                    statusId = 3,
+                    statusName = "Cancelled"
+                }
+            };
+            return Ok(status);
         }
     }
 }
