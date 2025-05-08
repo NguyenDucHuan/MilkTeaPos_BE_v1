@@ -1,4 +1,5 @@
-﻿using CloudinaryDotNet;
+﻿using AutoMapper;
+using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Microsoft.EntityFrameworkCore;
 using MilkTeaPosManagement.Api.Constants;
@@ -14,10 +15,11 @@ using System.IdentityModel.Tokens.Jwt;
 
 namespace MilkTeaPosManagement.Api.Services.Implements
 {
-    public class OrderService(IUnitOfWork uow, IConfiguration configuration) : IOrderService
+    public class OrderService(IUnitOfWork uow, IConfiguration configuration, IMapper mapper) : IOrderService
     {
         private readonly IUnitOfWork _uow = uow;
         private readonly IConfiguration _configuration = configuration;
+        private readonly IMapper _mapper = mapper;
         public async Task<(long, IPaginate<Order>?, string?)> GetAllOrders(OrderSearchModel? search)
         {
             if (search == null)
@@ -141,13 +143,13 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             }
             return (200, order, null);
         }
-        public async Task<MethodResult<Order>> CreateOrder(OrderRequest orderRequest, int userId)
+        public async Task<MethodResult<OrderResponse>> CreateOrder(OrderRequest orderRequest, int userId)
         {
             var orderItems = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.OrderId == null);
             decimal? totalAmount = 0;
             if (orderItems == null || orderItems?.Count == 0)
             {
-                return new MethodResult<Order>.Failure("Order not have any product!", StatusCodes.Status400BadRequest);
+                return new MethodResult<OrderResponse>.Failure("Order not have any product!", StatusCodes.Status400BadRequest);
             }
             var account = await _uow.GetRepository<Domain.Models.Account>().SingleOrDefaultAsync(predicate: a => a.AccountId == userId);
             
@@ -163,7 +165,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             //}
             if (account == null)
             {
-                return new MethodResult<Order>.Failure("Login required!", StatusCodes.Status400BadRequest);
+                return new MethodResult<OrderResponse>.Failure("Login required!", StatusCodes.Status400BadRequest);
             }
             foreach (var item in orderItems)
             {
@@ -177,15 +179,15 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 var voucher = await _uow.GetRepository<Voucher>().SingleOrDefaultAsync(predicate: v => v.VoucherCode.ToLower().Equals(orderRequest.VoucherCode.ToLower()));
                 if (voucher == null)
                 {
-                    return new MethodResult<Order>.Failure("Voucher not found!", StatusCodes.Status400BadRequest);
+                    return new MethodResult<OrderResponse>.Failure("Voucher not found!", StatusCodes.Status400BadRequest);
                 }
                 if (voucher.ExpirationDate < DateTime.Now)
                 {
-                    return new MethodResult<Order>.Failure("Voucher not valid!", StatusCodes.Status400BadRequest);
+                    return new MethodResult<OrderResponse>.Failure("Voucher not valid!", StatusCodes.Status400BadRequest);
                 }
                 if (voucher.MinimumOrderAmount > totalAmount)
                 {
-                    return new MethodResult<Order>.Failure("Not eligible to use voucher!", StatusCodes.Status400BadRequest);
+                    return new MethodResult<OrderResponse>.Failure("Not eligible to use voucher!", StatusCodes.Status400BadRequest);
                 }
                 var desc = voucher.DiscountType.ToUpper() == DiscountTypeConstant.AMOUNT.ToString() ? voucher.DiscountAmount : totalAmount * voucher.DiscountAmount;
 
@@ -212,7 +214,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 }
                 if (await _uow.CommitAsync() == 0)
                 {
-                    return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
+                    return new MethodResult<OrderResponse>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
                 }
                 var status = await _uow.GetRepository<Orderstatusupdate>().GetListAsync();
                 var statusId = status != null && status.Count > 0 ? status.Last().OrderStatusUpdateId + 1 : 1;
@@ -228,23 +230,24 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 await _uow.GetRepository<Orderstatusupdate>().InsertAsync(orderStatus);
                 if (await _uow.CommitAsync() <= 0)
                 {
-                    return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
+                    return new MethodResult<OrderResponse>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
                 }
-                var setOrder = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == order.OrderId, include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff).Include(od => od.Voucherusages).ThenInclude(v => v.Voucher));
+                var setOrder = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == order.OrderId, include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff));
+                var odResp = _mapper.Map<OrderResponse>(setOrder);
                 if (!string.IsNullOrEmpty(orderRequest.VoucherCode))
                 {
                     var voucher = await _uow.GetRepository<Voucher>().SingleOrDefaultAsync(predicate: v => v.VoucherCode.ToLower().Equals(orderRequest.VoucherCode.ToLower()));
                     if (voucher == null)
                     {
-                        return new MethodResult<Order>.Failure("Voucher not found!", StatusCodes.Status400BadRequest);
+                        return new MethodResult<OrderResponse>.Failure("Voucher not found!", StatusCodes.Status400BadRequest);
                     }
                     if (voucher.ExpirationDate < DateTime.Now)
                     {
-                        return new MethodResult<Order>.Failure("Voucher not valid!", StatusCodes.Status400BadRequest);
+                        return new MethodResult<OrderResponse>.Failure("Voucher not valid!", StatusCodes.Status400BadRequest);
                     }
                     if (voucher.MinimumOrderAmount > totalAmount)
                     {
-                        return new MethodResult<Order>.Failure("Not eligible to use voucher!", StatusCodes.Status400BadRequest);
+                        return new MethodResult<OrderResponse>.Failure("Not eligible to use voucher!", StatusCodes.Status400BadRequest);
                     }
 
                     var voucherUsage = new Voucherusage
@@ -257,8 +260,9 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     await _uow.GetRepository<Voucherusage>().InsertAsync(voucherUsage);
                     if (!(await _uow.CommitAsync() > 0))
                     {
-                        return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
+                        return new MethodResult<OrderResponse>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
                     }
+                    odResp.Voucher = voucher;
                 }
                 
                 var transaction = new Domain.Models.Transaction
@@ -274,12 +278,14 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 await _uow.GetRepository<Domain.Models.Transaction>().InsertAsync(transaction);
                 if (await _uow.CommitAsync() <= 0)
                 {
-                    return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
+                    return new MethodResult<OrderResponse>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
                 }
-                return new MethodResult<Order>.Success(setOrder);
+                
+                
+                return new MethodResult<OrderResponse>.Success(odResp);
             }
 
-            return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
+            return new MethodResult<OrderResponse>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
         }
         public async Task<MethodResult<Order>> CancelOrder(int orderId, int constant)
         {
