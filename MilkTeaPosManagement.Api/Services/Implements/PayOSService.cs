@@ -68,7 +68,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
 
             return (4, createPayment);
         }
-        public async Task<(long, PaymentLinkInformation?)> GetPaymentLinkInformation(int orderCode)
+        public async Task<(long, PaymentLinkInformation?)> GetPaymentLinkInformation(long orderCode)
         {
             var clientId = _configuration["payOS:ClientId"];
             if (clientId == null)
@@ -161,14 +161,15 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 PayOS _payOS = new(clientId, apiKey, checksumKey);
                 WebhookData data = _payOS.verifyPaymentWebhookData(body);
 
-                string responseCode = data.code;
+                string responseCode = body.code;
                 var orderCode = (int)data.orderCode;
                 var order = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == orderCode);
                 if (order is null)
                 {
                     return (3, null); //Order not found!!
                 }
-                if (order != null && responseCode == "00")
+                PaymentLinkInformation paymentLinkInformation = await _payOS.getPaymentLinkInformation(orderCode);
+                if (responseCode == "00" && paymentLinkInformation.status == "PAID")
                 {                    
                     var orderStatus = new Orderstatusupdate
                     {
@@ -196,7 +197,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         return (4, null); //fail
                     }
                     return (5, 0); // "Payment success"
-                } else
+                } else if (responseCode == "00")
                 {
                     var orderStatus = new Orderstatusupdate
                     {
@@ -225,6 +226,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     }
                     return (5, 0);
                 }
+                return (4, 1);
             }
             catch (Exception ex)
             {
