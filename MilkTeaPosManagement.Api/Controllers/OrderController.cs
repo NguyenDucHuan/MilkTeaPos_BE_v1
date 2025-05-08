@@ -140,27 +140,27 @@ namespace MilkTeaPosManagement.Api.Controllers
         //}
         [HttpGet("order-status")]
         public async Task<IActionResult> GetStatus()
-        {
+        {            
             var status = new List<object>
             {
                 new
                 {
-                    statusId = 0,
+                    statusId = 1,
                     statusName = "Pending"
                 },
                 new
                 {
-                    statusId = 1,
+                    statusId = 2,
                     statusName = "Preparing"
                 },
                 new
                 {
-                    statusId = 2,
+                    statusId = 3,
                     statusName = "Success"
                 },
                 new
                 {
-                    statusId = 3,
+                    statusId = 4,
                     statusName = "Cancelled"
                 }
             };

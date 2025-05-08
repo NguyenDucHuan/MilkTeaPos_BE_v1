@@ -295,7 +295,11 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 {
                     return new MethodResult<Order>.Failure("Order not found!", StatusCodes.Status400BadRequest);
                 }
-                if (orderStatus.OrderStatus == "Success")
+            if (constant < 1 || constant > 4)
+            {
+                return new MethodResult<Order>.Failure("Not found status!", StatusCodes.Status400BadRequest);
+            }
+            if (orderStatus.OrderStatus == "Success")
                 {
                     return new MethodResult<Order>.Failure("Order success can not be update status!", StatusCodes.Status400BadRequest);
                 }
@@ -303,6 +307,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 {
                     return new MethodResult<Order>.Failure("Order canceled can not be update status!", StatusCodes.Status400BadRequest);
                 }
+            
             
             
             var status = await _uow.GetRepository<Orderstatusupdate>().GetListAsync();
