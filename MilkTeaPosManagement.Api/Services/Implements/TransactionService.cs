@@ -68,6 +68,14 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 }
                 if (paymrentmethod.MethodName == "Online")
                 {
+                    transaction.AmountPaid = transaction.Amount;
+                    transaction.ChangeGiven = 0;
+                    transaction.PaymentMethodId = 3;
+                    _uow.GetRepository<Domain.Models.Transaction>().UpdateAsync(transaction);
+                    if (await _uow.CommitAsync() <= 0)
+                    {
+                        return new MethodResult<TransactionResponse>.Failure("Cannot update statuses", StatusCodes.Status400BadRequest); //fail
+                    }
                     var clientId = _configuration["payOS:ClientId"];
                     if (clientId == null)
                     {
@@ -118,7 +126,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     );
 
                     CreatePaymentResult createPayment = await _payOS.createPaymentLink(paymentData);
-                    var resp = _mapper.Map<TransactionResponse>(transaction);
+                    var resp = _mapper.Map<TransactionResponse>(transaction);                    
                     resp.PaymentLink = createPayment.checkoutUrl;
                     return new MethodResult<TransactionResponse>.Success(resp);
                 }

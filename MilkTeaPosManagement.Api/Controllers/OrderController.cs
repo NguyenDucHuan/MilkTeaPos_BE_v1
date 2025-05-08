@@ -20,7 +20,7 @@ namespace MilkTeaPosManagement.Api.Controllers
         public async Task<IActionResult> GetAll([FromQuery] OrderSearchModel? searchModel)
         {
             var result = await _service.GetAllOrders(searchModel);
-            if (result.Item1 == 0)
+            if (result.Item1 != 4)
             {
                 return BadRequest(result.Item3);
             }
