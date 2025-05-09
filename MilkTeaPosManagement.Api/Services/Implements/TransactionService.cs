@@ -44,12 +44,34 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 }
                 if (paymrentmethod.MethodName == "Cash" && model.AmountPaid.HasValue && model.AmountPaid.Value > transaction.Amount)
                 {
+                    var cashBalance = await _uow.GetRepository<Cashbalance>().SingleOrDefaultAsync();
+
+                    if (cashBalance == null)
+                    {
+                        var CashBalance = new Cashbalance
+                        {
+                            Amount = 0,
+                            UpdatedAt = DateTime.UtcNow
+                        };
+                        await _uow.GetRepository<Cashbalance>().InsertAsync(CashBalance);
+                        await _uow.CommitAsync();
+                        cashBalance = await _uow.GetRepository<Cashbalance>().SingleOrDefaultAsync();
+                    }
+                    if (cashBalance.Amount < model.AmountPaid - transaction.Amount)
+                    {
+                        return new MethodResult<TransactionResponse>.Failure("Tiền trong pos ko đủ để thối", StatusCodes.Status400BadRequest);
+                    }
+
                     transaction.PaymentMethodId = model.PaymentMethodId;
                     transaction.AmountPaid = model.AmountPaid;
                     transaction.ChangeGiven = model.AmountPaid - transaction.Amount;
                     transaction.TransactionDate = DateTime.Now;
                     transaction.Status = true;
                     transaction.UpdatedAt = DateTime.Now;
+                    transaction.BeforeCashBalance = cashBalance.Amount;
+                    transaction.AfterCashBalance = cashBalance.Amount - (model.AmountPaid - transaction.Amount);
+                    cashBalance.Amount = cashBalance.Amount - (model.AmountPaid - transaction.Amount);
+                    cashBalance.UpdatedAt = DateTime.Now;
                     var newStatus = new Orderstatusupdate
                     {
                         OrderId = transaction.OrderId,
@@ -59,6 +81,8 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     };
                     await _uow.GetRepository<Orderstatusupdate>().InsertAsync(newStatus);
 
+
+                    _uow.GetRepository<Cashbalance>().UpdateAsync(cashBalance);
                     _uow.GetRepository<Domain.Models.Transaction>().UpdateAsync(transaction);
 
                     if (await _uow.CommitAsync() > 0)
@@ -159,34 +183,6 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             return new MethodResult<Domain.Models.Transaction>.Success(transaction);
         }
 
-        public async Task<MethodResult<List<TransactionResponse>>> GetTransactionAsyncUseForCashBalance(DateTime date)
-        {
-            try
-            {
-                var transactions = await _uow.GetRepository<Domain.Models.Transaction>().GetListAsync(
-                    predicate: t => t.TransactionDate.HasValue && t.TransactionDate.Value.Date == date.Date,
-                    include: t => t.Include(t => t.PaymentMethod)
-                );
-                var PaymentMethod = await _uow.GetRepository<Paymentmethod>().GetListAsync();
-                if (PaymentMethod == null || !PaymentMethod.Any())
-                {
-                    return new MethodResult<List<TransactionResponse>>.Failure("No payment methods found", StatusCodes.Status404NotFound);
-                }
-                var CashPaymentMethod = PaymentMethod.FirstOrDefault(pm => pm.MethodName == "Cash");
-                if (transactions == null || !transactions.Any())
-                {
-                    return new MethodResult<List<TransactionResponse>>.Failure("No transactions found for the specified date", StatusCodes.Status404NotFound);
-                }
-                var transactionResponses = _mapper.Map<List<TransactionResponse>>(transactions);
-                var transactionList = transactionResponses.ToList();
-
-                return new MethodResult<List<TransactionResponse>>.Success(transactionList);
-            }
-            catch (Exception ex)
-            {
-                return new MethodResult<List<TransactionResponse>>.Failure($"Error retrieving transactions: {ex.Message}", StatusCodes.Status500InternalServerError);
-            }
-        }
 
     }
 }

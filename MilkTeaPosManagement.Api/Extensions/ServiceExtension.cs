@@ -26,6 +26,7 @@ namespace MilkTeaPosManagement.Api.Extensions
             service.AddTransient<IVoucherService, VoucherService>();
             service.AddTransient<ITransactionService, TransactionService>();
             service.AddTransient<IPayOSService, PayOSService>();
+            service.AddTransient<ICashBalanceService, CashBalanceService>();
             return service;
         }
     }

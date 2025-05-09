@@ -1,4 +1,6 @@
-﻿namespace MilkTeaPosManagement.Api.Models.TransactionModels
+﻿using System.Runtime.InteropServices;
+
+namespace MilkTeaPosManagement.Api.Models.TransactionModels
 {
     public class TransactionResponse
     {
@@ -11,6 +13,10 @@
         public decimal? AmountPaid { get; set; }
 
         public decimal? ChangeGiven { get; set; }
+
+        public decimal? BeforeCashBalance { get; set; }
+
+        public decimal? AfterCashBalance { get; set; }
 
         public string? TransactionType { get; set; }
 
@@ -29,5 +35,16 @@
         public bool? Status { get; set; }
 
         public string? PaymentLink { get; set; }
+    }
+
+    public class BalanceResponse
+    {
+        public decimal? Amount { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        public decimal? CashInTotal { get; set; }
+        public decimal? CashOutTotal { get; set; }
+        public decimal? OpeningBalance { get; set; }
+        public decimal? ClosingBalance { get; set; }
+        public List<TransactionResponse>? Transactions { get; set; }
     }
 }

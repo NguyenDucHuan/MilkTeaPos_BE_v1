@@ -33,15 +33,5 @@ namespace MilkTeaPosManagement.Api.Controllers
                 Ok
             );
         }
-        [HttpGet("for-cash-balance")]
-        [Authorize]
-        public async Task<IActionResult> GetTransactionUseForCashBalance([FromQuery] DateTime date)
-        {
-            var result = await _service.GetTransactionAsyncUseForCashBalance(date);
-            return result.Match(
-                (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
-                Ok
-            );
-        }
     }
 }
