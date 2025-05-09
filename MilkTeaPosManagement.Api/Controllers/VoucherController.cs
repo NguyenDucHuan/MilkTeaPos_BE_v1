@@ -20,6 +20,12 @@ namespace MilkTeaPosManagement.Api.Controllers
             var vouchers = await _service.GetVouchersByFilterAsync(filter);
             return Ok(vouchers);
         }
+        [HttpGet("active")]
+        public async Task<IActionResult> GetActiveVouchers()
+        {
+            var vouchers = await _service.GetActiveVouchersAsync();
+            return Ok(vouchers);
+        }
         [HttpGet("{id}")]
         public async Task<IActionResult> GetVoucherById([FromRoute] int id)
         {

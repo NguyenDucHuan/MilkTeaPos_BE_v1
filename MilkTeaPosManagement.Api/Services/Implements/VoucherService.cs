@@ -46,6 +46,10 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 : filter.SortBy.ToLower().Equals("expirationdate") ? o.OrderByDescending(od => od.ExpirationDate)
                 : o.OrderByDescending(od => od.MinimumOrderAmount))));
         }
+        public async Task<ICollection<VoucherResponse>> GetActiveVouchersAsync()
+        {
+            return await _uow.GetRepository<Voucher>().GetListAsync(selector: v => _mapper.Map<VoucherResponse>(v), orderBy: o => o.OrderByDescending(v => v.CreateAt), predicate: v => v.ExpirationDate > DateTime.Now);
+        }
         public async Task<MethodResult<VoucherResponse>> GetVoucherByIdAsync(int id)
         {
             var voucher = await _uow.GetRepository<Voucher>().SingleOrDefaultAsync(
