@@ -121,8 +121,8 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         amount: (int)order.TotalAmount,
                         description: "Thanh toan hoa don #" + transaction.OrderId,
                         items: items,
-                        cancelUrl: "http://localhost:5173",
-                        returnUrl: "http://localhost:5173",
+                        cancelUrl: "http://localhost:5173/orders",
+                        returnUrl: "http://localhost:5173/orders",
                         expiredAt: expiredAt
                     );
 

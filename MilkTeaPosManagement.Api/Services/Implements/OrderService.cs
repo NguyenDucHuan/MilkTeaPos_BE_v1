@@ -82,7 +82,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         var stt = OrderConstant.CANCELLED.ToString();
                         var orderStatus = new Orderstatusupdate
                         {
-                            OrderStatus = stt[..1].ToUpper()+stt.Substring(1).ToLower(),
+                            OrderStatus = stt[..1].ToUpper()+stt[1..].ToLower(),
                             OrderId = item.OrderId,
                             UpdatedAt = DateTime.Now,
                             AccountId = item.StaffId,
@@ -308,28 +308,32 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     return new MethodResult<Order>.Failure("Order canceled can not be update status!", StatusCodes.Status400BadRequest);
                 }
             
-            
-            
-            var status = await _uow.GetRepository<Orderstatusupdate>().GetListAsync();
-            var statusId = status != null && status.Count > 0 ? status.Last().OrderStatusUpdateId + 1 : 1;
-            var newStatus = new Orderstatusupdate
-            {
-                OrderStatusUpdateId = statusId,
-                OrderStatus = constant.ToString(),
-                OrderId = orderId,
-                UpdatedAt = DateTime.Now,
-                //AccountId = account.AccountId
-                AccountId = orderStatuses.First().AccountId
-            };
+            var newStt = constant == 1 ? "Pending" : constant == 2 ? "Preparing" : constant == 3 ? "Success" : "Cancelled";
+            var existedStt = await _uow.GetRepository<Orderstatusupdate>().SingleOrDefaultAsync(predicate: s => s.OrderId == orderId && s.OrderStatus == newStt);
 
-            await _uow.GetRepository<Orderstatusupdate>().InsertAsync(newStatus);
-            if (await _uow.CommitAsync() > 0)
+            if (existedStt != null)
             {
-                var setOrder = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == orderId, include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff));
-                return new MethodResult<Order>.Success(setOrder);
+                var status = await _uow.GetRepository<Orderstatusupdate>().GetListAsync();
+                var statusId = status != null && status.Count > 0 ? status.Last().OrderStatusUpdateId + 1 : 1;
+                var newStatus = new Orderstatusupdate
+                {
+                    OrderStatusUpdateId = statusId,
+                    OrderStatus = constant.ToString(),
+                    OrderId = orderId,
+                    UpdatedAt = DateTime.Now,
+                    //AccountId = account.AccountId
+                    AccountId = orderStatus.AccountId
+                };
+
+                await _uow.GetRepository<Orderstatusupdate>().InsertAsync(newStatus);
+                if (await _uow.CommitAsync() > 0)
+                {
+                    var setOrder = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == orderId, include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff));
+                    return new MethodResult<Order>.Success(setOrder);
+                }
             }
-            return new MethodResult<Order>.Failure("Order cannot be canceled!", StatusCodes.Status400BadRequest);
-            
+            var setOrderNotChange = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == orderId, include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff));
+            return new MethodResult<Order>.Success(setOrderNotChange);
         }
         //public async Task<MethodResult<Order>> ConfirmOrder(int orderId)
         //{
