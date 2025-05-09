@@ -3,13 +3,15 @@ using MilkTeaPosManagement.Api.Constants;
 using MilkTeaPosManagement.Api.Helper;
 using MilkTeaPosManagement.Api.Models.PaymentMethodModels;
 using MilkTeaPosManagement.Api.Models.TransactionModels;
-using MilkTeaPosManagement.Api.Models.VoucherMethod;
 using MilkTeaPosManagement.Api.Services.Interfaces;
 using MilkTeaPosManagement.DAL.UnitOfWorks;
 using MilkTeaPosManagement.Domain.Models;
 using Net.payOS.Types;
 using Net.payOS;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
+using MilkTeaPosManagement.Api.Models.VoucherMethod;
+
 
 namespace MilkTeaPosManagement.Api.Services.Implements
 {
@@ -34,7 +36,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 }
                 if (paymrentmethod.MethodName == "Cash" && model.AmountPaid.HasValue && model.AmountPaid.Value <= transaction.Amount)
                 {
-                    return new MethodResult<TransactionResponse>.Failure("Amount paid cannot be less than "+ transaction.Amount+"!", StatusCodes.Status400BadRequest);
+                    return new MethodResult<TransactionResponse>.Failure("Amount paid cannot be less than " + transaction.Amount + "!", StatusCodes.Status400BadRequest);
                 }
                 if (paymrentmethod.MethodName == "Cash" && (!model.AmountPaid.HasValue || model.AmountPaid.Value <= 0))
                 {
@@ -103,7 +105,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         return new MethodResult<TransactionResponse>.Failure("Order not found!", StatusCodes.Status400BadRequest); //Order not found!!
                     }
 
-                    var orderDetails = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.OrderId == transaction.OrderId, include: oi => oi.Include(id=>id.Product));
+                    var orderDetails = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.OrderId == transaction.OrderId, include: oi => oi.Include(id => id.Product));
                     List<ItemData> items = [];
                     if (orderDetails is not null)
                     {
@@ -117,7 +119,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     PaymentData paymentData = new(
                         orderCode: (int)transaction.OrderId,
                         amount: (int)order.TotalAmount,
-                        description: "Thanh toan hoa don #"+transaction.OrderId ,
+                        description: "Thanh toan hoa don #" + transaction.OrderId,
                         items: items,
                         cancelUrl: "http://localhost:5173",
                         returnUrl: "http://localhost:5173",
@@ -125,7 +127,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     );
 
                     CreatePaymentResult createPayment = await _payOS.createPaymentLink(paymentData);
-                    var resp = _mapper.Map<TransactionResponse>(transaction);                    
+                    var resp = _mapper.Map<TransactionResponse>(transaction);
                     resp.PaymentLink = createPayment.checkoutUrl;
                     return new MethodResult<TransactionResponse>.Success(resp);
                 }
@@ -156,5 +158,35 @@ namespace MilkTeaPosManagement.Api.Services.Implements
 
             return new MethodResult<Domain.Models.Transaction>.Success(transaction);
         }
+
+        public async Task<MethodResult<List<TransactionResponse>>> GetTransactionAsyncUseForCashBalance(DateTime date)
+        {
+            try
+            {
+                var transactions = await _uow.GetRepository<Domain.Models.Transaction>().GetListAsync(
+                    predicate: t => t.TransactionDate.HasValue && t.TransactionDate.Value.Date == date.Date,
+                    include: t => t.Include(t => t.PaymentMethod)
+                );
+                var PaymentMethod = await _uow.GetRepository<Paymentmethod>().GetListAsync();
+                if (PaymentMethod == null || !PaymentMethod.Any())
+                {
+                    return new MethodResult<List<TransactionResponse>>.Failure("No payment methods found", StatusCodes.Status404NotFound);
+                }
+                var CashPaymentMethod = PaymentMethod.FirstOrDefault(pm => pm.MethodName == "Cash");
+                if (transactions == null || !transactions.Any())
+                {
+                    return new MethodResult<List<TransactionResponse>>.Failure("No transactions found for the specified date", StatusCodes.Status404NotFound);
+                }
+                var transactionResponses = _mapper.Map<List<TransactionResponse>>(transactions);
+                var transactionList = transactionResponses.ToList();
+
+                return new MethodResult<List<TransactionResponse>>.Success(transactionList);
+            }
+            catch (Exception ex)
+            {
+                return new MethodResult<List<TransactionResponse>>.Failure($"Error retrieving transactions: {ex.Message}", StatusCodes.Status500InternalServerError);
+            }
+        }
+
     }
 }

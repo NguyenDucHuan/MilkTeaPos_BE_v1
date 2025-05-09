@@ -45,5 +45,6 @@
             public const string UpdateImageProduct = $"{GetAll}/update-image";
 
         }
+
     }
 }

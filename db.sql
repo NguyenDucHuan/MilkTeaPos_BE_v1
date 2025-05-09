@@ -158,9 +158,9 @@ CREATE TABLE CashBalance (
 );
 CREATE TABLE CashFlow (
     CashFlowId INT AUTO_INCREMENT PRIMARY KEY,
-    Date DATE, -- Ngày ghi nhận dòng tiền
-    CashIn DECIMAL(10, 2) DEFAULT 0, -- Tổng tiền thu vào trong ngày
-    CashOut DECIMAL(10, 2) DEFAULT 0, -- Tổng tiền chi ra trong ngày
+    Date DATE, 
+    CashIn DECIMAL(10, 2) DEFAULT 0,
+    CashOut DECIMAL(10, 2) DEFAULT 0, 
     NetCash DECIMAL(10, 2) DEFAULT 0, -- Dòng tiền ròng (CashIn - CashOut)
     CashBalance DECIMAL(10, 2) DEFAULT 0, -- Số dư tiền mặt tại thời điểm ghi nhận
     UserID INT, -- Nhân viên hoặc người thực hiện giao dịch

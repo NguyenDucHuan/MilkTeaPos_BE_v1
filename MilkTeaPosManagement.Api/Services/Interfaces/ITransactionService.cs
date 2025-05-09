@@ -13,5 +13,8 @@ namespace MilkTeaPosManagement.Api.Services.Interfaces
         Task<MethodResult<Transaction>> GetTransactionByIdAsync(int id);
         //Task<MethodResult<Transaction>> CreateTransactionAsync(VoucherCreateRequestModel request, int userId);
         Task<MethodResult<TransactionResponse>> UpdateTransactionAsync(int id, TransactionUpdateModel model);
+
+        Task<MethodResult<List<TransactionResponse>>> GetTransactionAsyncUseForCashBalance(DateTime date);
+
     }
 }
