@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MilkTeaPosManagement.Api.Models.TransactionModels;
 using MilkTeaPosManagement.Api.Models.VoucherMethod;
@@ -9,7 +10,7 @@ namespace MilkTeaPosManagement.Api.Controllers
 {
     [Route("api/transactions")]
     [ApiController]
-    public class TransactionController (ITransactionService service): ControllerBase
+    public class TransactionController(ITransactionService service) : ControllerBase
     {
         private readonly ITransactionService _service = service;
         [HttpPut]

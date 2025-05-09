@@ -21,8 +21,6 @@ public partial class MilTeaPosDbContext : DbContext
 
     public virtual DbSet<Cashbalance> Cashbalances { get; set; }
 
-    public virtual DbSet<Cashflow> Cashflows { get; set; }
-
     public virtual DbSet<Category> Categories { get; set; }
 
     public virtual DbSet<Comboltem> Comboltems { get; set; }
@@ -97,40 +95,6 @@ public partial class MilTeaPosDbContext : DbContext
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("Updated_at");
-        });
-
-        modelBuilder.Entity<Cashflow>(entity =>
-        {
-            entity.HasKey(e => e.CashFlowId).HasName("PRIMARY");
-
-            entity.ToTable("cashflow");
-
-            entity.HasIndex(e => e.UserId, "UserID");
-
-            entity.Property(e => e.CashBalance)
-                .HasPrecision(10, 2)
-                .HasDefaultValueSql("'0.00'");
-            entity.Property(e => e.CashIn)
-                .HasPrecision(10, 2)
-                .HasDefaultValueSql("'0.00'");
-            entity.Property(e => e.CashOut)
-                .HasPrecision(10, 2)
-                .HasDefaultValueSql("'0.00'");
-            entity.Property(e => e.CreatedAt)
-                .HasColumnType("datetime")
-                .HasColumnName("Created_at");
-            entity.Property(e => e.FlowType).HasColumnType("enum('CashIn','CashOut')");
-            entity.Property(e => e.NetCash)
-                .HasPrecision(10, 2)
-                .HasDefaultValueSql("'0.00'");
-            entity.Property(e => e.UpdatedAt)
-                .HasColumnType("datetime")
-                .HasColumnName("Updated_at");
-            entity.Property(e => e.UserId).HasColumnName("UserID");
-
-            entity.HasOne(d => d.User).WithMany(p => p.Cashflows)
-                .HasForeignKey(d => d.UserId)
-                .HasConstraintName("cashflow_ibfk_1");
         });
 
         modelBuilder.Entity<Category>(entity =>
@@ -306,8 +270,10 @@ public partial class MilTeaPosDbContext : DbContext
 
             entity.HasIndex(e => e.StaffId, "StaffId");
 
+            entity.Property(e => e.AfterCashBalance).HasPrecision(10, 2);
             entity.Property(e => e.Amount).HasPrecision(10, 2);
             entity.Property(e => e.AmountPaid).HasPrecision(10, 2);
+            entity.Property(e => e.BeforeCashBalance).HasPrecision(10, 2);
             entity.Property(e => e.ChangeGiven).HasPrecision(10, 2);
             entity.Property(e => e.CreatedAt)
                 .HasColumnType("datetime")

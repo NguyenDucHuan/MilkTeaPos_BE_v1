@@ -18,9 +18,7 @@ namespace MilkTeaPosManagement.Api.Extensions.Filter
                  (user.Phone != null && user.Phone.Contains(searchTerm))) &&
 
                 (string.IsNullOrWhiteSpace(filter.Role) || user.Role == filter.Role) &&
-
                 (!filter.Status.HasValue || user.Status == filter.Status.Value) &&
-
                 (!filter.CreatedFrom.HasValue || user.CreatedAt >= filter.CreatedFrom.Value.Date) &&
                 (!filter.CreatedTo.HasValue || user.CreatedAt <= filter.CreatedTo.Value.Date.AddDays(1).AddSeconds(-1));
         }

@@ -3,13 +3,15 @@ using MilkTeaPosManagement.Api.Constants;
 using MilkTeaPosManagement.Api.Helper;
 using MilkTeaPosManagement.Api.Models.PaymentMethodModels;
 using MilkTeaPosManagement.Api.Models.TransactionModels;
-using MilkTeaPosManagement.Api.Models.VoucherMethod;
 using MilkTeaPosManagement.Api.Services.Interfaces;
 using MilkTeaPosManagement.DAL.UnitOfWorks;
 using MilkTeaPosManagement.Domain.Models;
 using Net.payOS.Types;
 using Net.payOS;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
+using MilkTeaPosManagement.Api.Models.VoucherMethod;
+
 
 namespace MilkTeaPosManagement.Api.Services.Implements
 {
@@ -34,7 +36,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 }
                 if (paymrentmethod.MethodName == "Cash" && model.AmountPaid.HasValue && model.AmountPaid.Value <= transaction.Amount)
                 {
-                    return new MethodResult<TransactionResponse>.Failure("Amount paid cannot be less than "+ transaction.Amount+"!", StatusCodes.Status400BadRequest);
+                    return new MethodResult<TransactionResponse>.Failure("Amount paid cannot be less than " + transaction.Amount + "!", StatusCodes.Status400BadRequest);
                 }
                 if (paymrentmethod.MethodName == "Cash" && (!model.AmountPaid.HasValue || model.AmountPaid.Value <= 0))
                 {
@@ -42,12 +44,34 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 }
                 if (paymrentmethod.MethodName == "Cash" && model.AmountPaid.HasValue && model.AmountPaid.Value > transaction.Amount)
                 {
+                    var cashBalance = await _uow.GetRepository<Cashbalance>().SingleOrDefaultAsync();
+
+                    if (cashBalance == null)
+                    {
+                        var CashBalance = new Cashbalance
+                        {
+                            Amount = 0,
+                            UpdatedAt = DateTime.UtcNow
+                        };
+                        await _uow.GetRepository<Cashbalance>().InsertAsync(CashBalance);
+                        await _uow.CommitAsync();
+                        cashBalance = await _uow.GetRepository<Cashbalance>().SingleOrDefaultAsync();
+                    }
+                    if (cashBalance.Amount < model.AmountPaid - transaction.Amount)
+                    {
+                        return new MethodResult<TransactionResponse>.Failure("Tiền trong pos ko đủ để thối", StatusCodes.Status400BadRequest);
+                    }
+
                     transaction.PaymentMethodId = model.PaymentMethodId;
                     transaction.AmountPaid = model.AmountPaid;
                     transaction.ChangeGiven = model.AmountPaid - transaction.Amount;
                     transaction.TransactionDate = DateTime.Now;
                     transaction.Status = true;
                     transaction.UpdatedAt = DateTime.Now;
+                    transaction.BeforeCashBalance = cashBalance.Amount;
+                    transaction.AfterCashBalance = cashBalance.Amount - (model.AmountPaid - transaction.Amount);
+                    cashBalance.Amount = cashBalance.Amount - (model.AmountPaid - transaction.Amount);
+                    cashBalance.UpdatedAt = DateTime.Now;
                     var newStatus = new Orderstatusupdate
                     {
                         OrderId = transaction.OrderId,
@@ -57,6 +81,8 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     };
                     await _uow.GetRepository<Orderstatusupdate>().InsertAsync(newStatus);
 
+
+                    _uow.GetRepository<Cashbalance>().UpdateAsync(cashBalance);
                     _uow.GetRepository<Domain.Models.Transaction>().UpdateAsync(transaction);
 
                     if (await _uow.CommitAsync() > 0)
@@ -103,7 +129,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         return new MethodResult<TransactionResponse>.Failure("Order not found!", StatusCodes.Status400BadRequest); //Order not found!!
                     }
 
-                    var orderDetails = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.OrderId == transaction.OrderId, include: oi => oi.Include(id=>id.Product));
+                    var orderDetails = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.OrderId == transaction.OrderId, include: oi => oi.Include(id => id.Product));
                     List<ItemData> items = [];
                     if (orderDetails is not null)
                     {
@@ -117,7 +143,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     PaymentData paymentData = new(
                         orderCode: (int)transaction.OrderId,
                         amount: (int)order.TotalAmount,
-                        description: "Thanh toan hoa don #"+transaction.OrderId ,
+                        description: "Thanh toan hoa don #" + transaction.OrderId,
                         items: items,
                         cancelUrl: "http://localhost:5173/orders",
                         returnUrl: "http://localhost:5173/orders",
@@ -125,7 +151,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     );
 
                     CreatePaymentResult createPayment = await _payOS.createPaymentLink(paymentData);
-                    var resp = _mapper.Map<TransactionResponse>(transaction);                    
+                    var resp = _mapper.Map<TransactionResponse>(transaction);
                     resp.PaymentLink = createPayment.checkoutUrl;
                     return new MethodResult<TransactionResponse>.Success(resp);
                 }
@@ -156,5 +182,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
 
             return new MethodResult<Domain.Models.Transaction>.Success(transaction);
         }
+
+
     }
 }

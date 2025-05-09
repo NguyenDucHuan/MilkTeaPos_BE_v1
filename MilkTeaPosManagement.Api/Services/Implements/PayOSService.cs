@@ -28,7 +28,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             var checksumKey = _configuration["payOS:ChecksumKey"];
             if (checksumKey == null)
             {
-                return (2, null); //ChecksumKey not found
+                return (2, null);
             }
 
             PayOS _payOS = new(
@@ -49,7 +49,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 foreach (var orderDetail in orderDetails)
                 {
-                        items.Add(new ItemData(orderDetail.Product.ProductName, (int)orderDetail.Quantity,(int) orderDetail.Price));
+                    items.Add(new ItemData(orderDetail.Product.ProductName, (int)orderDetail.Quantity, (int)orderDetail.Price));
                 }
             }
             long expiredAt = (long)(DateTime.UtcNow.AddMinutes(10) - new DateTime(1970, 1, 1)).TotalSeconds;
@@ -170,7 +170,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 }
                 PaymentLinkInformation paymentLinkInformation = await _payOS.getPaymentLinkInformation(orderCode);
                 if (responseCode == "00" && paymentLinkInformation.status == "PAID")
-                {                    
+                {
                     var orderStatus = new Orderstatusupdate
                     {
                         OrderStatus = OrderConstant.SUCCESS.ToString(),
@@ -197,7 +197,8 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         return (4, null); //fail
                     }
                     return (5, 0); // "Payment success"
-                } else if (responseCode == "00")
+                }
+                else if (responseCode == "00")
                 {
                     var orderStatus = new Orderstatusupdate
                     {

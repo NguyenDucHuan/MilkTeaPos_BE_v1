@@ -15,6 +15,10 @@ public partial class Transaction
 
     public decimal? ChangeGiven { get; set; }
 
+    public decimal? BeforeCashBalance { get; set; }
+
+    public decimal? AfterCashBalance { get; set; }
+
     public string? TransactionType { get; set; }
 
     public string? Description { get; set; }
