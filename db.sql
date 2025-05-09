@@ -140,16 +140,35 @@ CREATE TABLE OrderItems (
     FOREIGN KEY (OrderId) REFERENCES Orders(OrderId)
 );
 
-
 -- OrderStatusUpdates Table
 CREATE TABLE OrderStatusUpdates (
     OrderStatusUpdateId INT AUTO_INCREMENT PRIMARY KEY,
-    OrderStatus ENUM('Pending', 'Shipped', 'Delivered','Success', 'Cancelled'),
+    OrderStatus ENUM('PENDING', 'PREPARING', 'SUCCESS', 'CANCELLED'),
     OrderId INT,
     AccountId INT,
     Updated_at DATETIME,
     FOREIGN KEY (OrderId) REFERENCES Orders(OrderId),
     FOREIGN KEY (AccountId) REFERENCES Accounts(AccountId)
+);
+
+CREATE TABLE CashBalance (
+    BalanceId INT AUTO_INCREMENT PRIMARY KEY,
+    Amount DECIMAL(10, 2),        
+    Updated_at DATETIME
+);
+CREATE TABLE CashFlow (
+    CashFlowId INT AUTO_INCREMENT PRIMARY KEY,
+    Date DATE, -- Ngày ghi nhận dòng tiền
+    CashIn DECIMAL(10, 2) DEFAULT 0, -- Tổng tiền thu vào trong ngày
+    CashOut DECIMAL(10, 2) DEFAULT 0, -- Tổng tiền chi ra trong ngày
+    NetCash DECIMAL(10, 2) DEFAULT 0, -- Dòng tiền ròng (CashIn - CashOut)
+    CashBalance DECIMAL(10, 2) DEFAULT 0, -- Số dư tiền mặt tại thời điểm ghi nhận
+    UserID INT, -- Nhân viên hoặc người thực hiện giao dịch
+    FlowType ENUM('CashIn', 'CashOut'), -- Loại giao dịch
+    Created_at DATETIME, -- Thời gian ghi nhận dòng tiền
+    Updated_at DATETIME,
+    Status bool,
+    FOREIGN KEY (UserID) REFERENCES Accounts(AccountId) -- Liên kết với bảng Accounts (Nhân viên)
 );
 
 -- Insert sample data into Categories Table
