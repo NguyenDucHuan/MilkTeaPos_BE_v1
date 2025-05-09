@@ -6,6 +6,7 @@ using MilkTeaPosManagement.Api.Models.PaymentMethodModels;
 using MilkTeaPosManagement.Api.Services.Interfaces;
 using MilkTeaPosManagement.Domain.Models;
 using MilkTeaPosManagement.Domain.Paginate;
+using System.Security.Claims;
 
 namespace MilkTeaPosManagement.Api.Controllers
 {
@@ -19,7 +20,7 @@ namespace MilkTeaPosManagement.Api.Controllers
         public async Task<IActionResult> GetAll([FromQuery] OrderSearchModel? searchModel)
         {
             var result = await _service.GetAllOrders(searchModel);
-            if (result.Item1 == 0)
+            if (result.Item1 != 4)
             {
                 return BadRequest(result.Item3);
             }
@@ -108,29 +109,62 @@ namespace MilkTeaPosManagement.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> Add([FromBody] OrderRequest request)
         {
-            var result = await _service.CreateOrder(request);
+            var userIdString = User.FindFirst(ClaimTypes.Sid)?.Value;
+            if (!int.TryParse(userIdString, out var userId))
+            {
+                return BadRequest("Invalid user ID.");
+            }
+            var result = await _service.CreateOrder(request, userId);
             return result.Match(
                 (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
                 Ok
             );
         }
-        [HttpDelete("cancel-order")]
-        public async Task<IActionResult> Delete([FromBody] int orderId)
+        [HttpPut("change-status/{orderId}")]
+        public async Task<IActionResult> Delete([FromRoute] int orderId, int statusId)
         {
-            var result = await _service.CancelOrder(orderId);
+            var result = await _service.CancelOrder(orderId, statusId);
             return result.Match(
                 (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
                 Ok
             );
         }
-        [HttpPut("confirm-order")]
-        public async Task<IActionResult> Update([FromBody] int orderId)
-        {
-            var result = await _service.ConfirmOrder(orderId);
-            return result.Match(
-                (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
-                Ok
-            );
+        //[HttpPut("confirm-order")]
+        //public async Task<IActionResult> Update([FromBody] int orderId)
+        //{
+        //    var result = await _service.ConfirmOrder(orderId);
+        //    return result.Match(
+        //        (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
+        //        Ok
+        //    );
+        //}
+        [HttpGet("order-status")]
+        public async Task<IActionResult> GetStatus()
+        {            
+            var status = new List<object>
+            {
+                new
+                {
+                    statusId = 1,
+                    statusName = "Pending"
+                },
+                new
+                {
+                    statusId = 2,
+                    statusName = "Preparing"
+                },
+                new
+                {
+                    statusId = 3,
+                    statusName = "Success"
+                },
+                new
+                {
+                    statusId = 4,
+                    statusName = "Cancelled"
+                }
+            };
+            return Ok(status);
         }
     }
 }

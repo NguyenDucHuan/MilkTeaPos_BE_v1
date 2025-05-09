@@ -6,6 +6,6 @@ namespace MilkTeaPosManagement.Api.Models.OrderModels
     {
         public string? Note { get; set; }
         public string? VoucherCode { get; set; }
-        public int StaffId { get; set; }
+        //public int StaffId { get; set; }
     }
 }

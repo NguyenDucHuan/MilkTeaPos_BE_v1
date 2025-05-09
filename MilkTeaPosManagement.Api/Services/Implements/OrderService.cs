@@ -1,4 +1,5 @@
-﻿using CloudinaryDotNet;
+﻿using AutoMapper;
+using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Microsoft.EntityFrameworkCore;
 using MilkTeaPosManagement.Api.Constants;
@@ -8,18 +9,22 @@ using MilkTeaPosManagement.Api.Services.Interfaces;
 using MilkTeaPosManagement.DAL.UnitOfWorks;
 using MilkTeaPosManagement.Domain.Models;
 using MilkTeaPosManagement.Domain.Paginate;
+using Net.payOS;
+using Net.payOS.Types;
 using System.IdentityModel.Tokens.Jwt;
 
 namespace MilkTeaPosManagement.Api.Services.Implements
 {
-    public class OrderService(IUnitOfWork uow, IHttpContextAccessor HttpContextAccessor) : IOrderService
+    public class OrderService(IUnitOfWork uow, IConfiguration configuration, IMapper mapper) : IOrderService
     {
         private readonly IUnitOfWork _uow = uow;
+        private readonly IConfiguration _configuration = configuration;
+        private readonly IMapper _mapper = mapper;
         public async Task<(long, IPaginate<Order>?, string?)> GetAllOrders(OrderSearchModel? search)
         {
             if (search == null)
             {
-                return (1, await _uow.GetRepository<Order>().GetPagingListAsync(include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff).Include(od => od.Orderitems).Include(od => od.Voucherusages).ThenInclude(vu => vu.Voucher).Include(od => od.Transactions).ThenInclude(t => t.PaymentMethod), page: 1, size: 10, orderBy: o => o.OrderByDescending(od => od.CreateAt)), null);
+                return (4, await _uow.GetRepository<Order>().GetPagingListAsync(include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff).Include(od => od.Orderitems).Include(od => od.Voucherusages).ThenInclude(vu => vu.Voucher).Include(od => od.Transactions).ThenInclude(t => t.PaymentMethod), page: 1, size: 10, orderBy: o => o.OrderByDescending(od => od.CreateAt)), null);
             }
             //if (search.Status != null && search.Status != OrderConstant.PENDING && search.Status != OrderConstant.SHIPPED && search.Status != OrderConstant.DELIVERED && search.Status != OrderConstant.CANCELED)
             //{
@@ -30,7 +35,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 return (0, null, "Staff not found");
             }
-            return (1, await _uow.GetRepository<Order>().GetPagingListAsync(include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff).Include(od => od.Orderitems).Include(od => od.Voucherusages).ThenInclude(vu => vu.Voucher).Include(od => od.Transactions).ThenInclude(t => t.PaymentMethod),
+            var list = await _uow.GetRepository<Order>().GetPagingListAsync(include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff).Include(od => od.Orderitems).Include(od => od.Voucherusages).ThenInclude(vu => vu.Voucher).Include(od => od.Transactions).ThenInclude(t => t.PaymentMethod),
                                                                         predicate: o => (!search.StaffId.HasValue || o.StaffId == search.StaffId) &&
                                                                                         (!search.FromDate.HasValue || o.CreateAt.Value.Date >= search.FromDate.Value.Date) &&
                                                                                         (!search.ToDate.HasValue || o.CreateAt.Value.Date <= search.ToDate.Value.Date) &&
@@ -49,7 +54,77 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                                                                                                                                                                                                                                             : search.SortBy.ToLower().Equals("totalamount") ? o.OrderByDescending(od => od.TotalAmount)
                                                                                                                                                                                                                                             : search.SortBy.ToLower().Equals("staffid") ? o.OrderByDescending(od => od.StaffId)
                                                                                                                                                                                                                                                                                                 : o.OrderByDescending(od => od.Orderstatusupdates.FirstOrDefault().OrderStatus)))
-                                                                        ), null); 
+                                                                        );
+            var clientId = _configuration["payOS:ClientId"];
+            if (clientId == null)
+            {
+                return (1, null, "ClientId not found"); //ClientId not found
+            }
+            var apiKey = _configuration["payOS:ApiKey"];
+            if (apiKey == null)
+            {
+                return (2, null, "APIKEY not found"); //ApiKey not found
+            }
+            var checksumKey = _configuration["payOS:ChecksumKey"];
+            if (checksumKey == null)
+            {
+                return (3, null, "ChecksumKey not found"); //ChecksumKey not found
+            }
+
+            PayOS _payOS = new(clientId, apiKey, checksumKey);
+            foreach (var item in list.Items)
+            {
+                if (item.Transactions.FirstOrDefault() != null && item.Transactions.FirstOrDefault()?.PaymentMethodId == 3)
+                {
+                    PaymentLinkInformation paymentLinkInformation = await _payOS.getPaymentLinkInformation(item.OrderId);
+                    if (paymentLinkInformation.status == "CANCELLED" && (item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "Delivered" || item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "Pending"))
+                    {
+                        var stt = OrderConstant.CANCELLED.ToString();
+                        var orderStatus = new Orderstatusupdate
+                        {
+                            OrderStatus = stt[..1].ToUpper()+stt.Substring(1).ToLower(),
+                            OrderId = item.OrderId,
+                            UpdatedAt = DateTime.Now,
+                            AccountId = item.StaffId,
+                        };
+
+                        await _uow.GetRepository<Orderstatusupdate>().InsertAsync(orderStatus);
+                        var transaction = item.Transactions.FirstOrDefault();
+                        transaction.Status = false;                        
+                        transaction.TransactionDate = DateTime.Now;
+                        transaction.UpdatedAt = DateTime.Now;
+                        
+                        _uow.GetRepository<Domain.Models.Transaction>().UpdateAsync(transaction);
+                        if (await _uow.CommitAsync() <= 0)
+                        {
+                            return (4, null, "Cannot update statuses"); //fail
+                        }
+                    } else if (paymentLinkInformation.status == "PAID" && (item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "Delivered" || item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "Pending"))
+                    {
+                        var stt = OrderConstant.SUCCESS.ToString();
+                        var orderStatus = new Orderstatusupdate
+                        {
+                            OrderStatus = stt[..1].ToUpper() + stt.Substring(1).ToLower(),
+                            OrderId = item.OrderId,
+                            UpdatedAt = DateTime.Now,
+                            AccountId = item.StaffId,
+                        };
+
+                        await _uow.GetRepository<Orderstatusupdate>().InsertAsync(orderStatus);
+                        var transaction = item.Transactions.FirstOrDefault();
+                        transaction.Status = true;
+                        transaction.TransactionDate = DateTime.Now;
+                        transaction.UpdatedAt = DateTime.Now;
+
+                        _uow.GetRepository<Domain.Models.Transaction>().UpdateAsync(transaction);
+                        if (await _uow.CommitAsync() <= 0)
+                        {
+                            return (4, null, "Cannot update statuses"); //fail
+                        }
+                    }
+                }
+            }
+            return (4, list, null); 
         }
         //public async Task<IPaginate<Order>> GetOrdersByStaffId(int staffId)
         //{
@@ -68,15 +143,15 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             }
             return (200, order, null);
         }
-        public async Task<MethodResult<Order>> CreateOrder(OrderRequest orderRequest)
+        public async Task<MethodResult<OrderResponse>> CreateOrder(OrderRequest orderRequest, int userId)
         {
             var orderItems = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.OrderId == null);
             decimal? totalAmount = 0;
             if (orderItems == null || orderItems?.Count == 0)
             {
-                return new MethodResult<Order>.Failure("Order not have any product!", StatusCodes.Status400BadRequest);
+                return new MethodResult<OrderResponse>.Failure("Order not have any product!", StatusCodes.Status400BadRequest);
             }
-            var account = await _uow.GetRepository<Domain.Models.Account>().SingleOrDefaultAsync(predicate: a => a.AccountId == orderRequest.StaffId);
+            var account = await _uow.GetRepository<Domain.Models.Account>().SingleOrDefaultAsync(predicate: a => a.AccountId == userId);
             
             //var account = await GetCurrentUser();
             //if (account == null)
@@ -90,7 +165,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             //}
             if (account == null)
             {
-                return new MethodResult<Order>.Failure("Login required!", StatusCodes.Status400BadRequest);
+                return new MethodResult<OrderResponse>.Failure("Login required!", StatusCodes.Status400BadRequest);
             }
             foreach (var item in orderItems)
             {
@@ -104,29 +179,19 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 var voucher = await _uow.GetRepository<Voucher>().SingleOrDefaultAsync(predicate: v => v.VoucherCode.ToLower().Equals(orderRequest.VoucherCode.ToLower()));
                 if (voucher == null)
                 {
-                    return new MethodResult<Order>.Failure("Voucher not found!", StatusCodes.Status400BadRequest);
+                    return new MethodResult<OrderResponse>.Failure("Voucher not found!", StatusCodes.Status400BadRequest);
                 }
                 if (voucher.ExpirationDate < DateTime.Now)
                 {
-                    return new MethodResult<Order>.Failure("Voucher not valid!", StatusCodes.Status400BadRequest);
+                    return new MethodResult<OrderResponse>.Failure("Voucher not valid!", StatusCodes.Status400BadRequest);
                 }
                 if (voucher.MinimumOrderAmount > totalAmount)
                 {
-                    return new MethodResult<Order>.Failure("Not eligible to use voucher!", StatusCodes.Status400BadRequest);
+                    return new MethodResult<OrderResponse>.Failure("Not eligible to use voucher!", StatusCodes.Status400BadRequest);
                 }
-                var voucherUsage = new Voucherusage
-                {
-                    VoucherId = voucher.VoucherId,
-                    OrderId = orderId,
-                    AmountUsed = voucher.DiscountType == DiscountTypeConstant.AMOUNT.ToString() ? voucher.DiscountAmount : totalAmount * voucher.DiscountAmount,
-                    UsedAt = DateTime.Now
-                };
-                totalAmount -= voucherUsage.AmountUsed;
-                await _uow.GetRepository<Voucherusage>().InsertAsync(voucherUsage);
-                if (await _uow.CommitAsync() <= 0)
-                {
-                    return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
-                }
+                var desc = voucher.DiscountType.ToUpper() == DiscountTypeConstant.AMOUNT.ToString() ? voucher.DiscountAmount : totalAmount * voucher.DiscountAmount;
+
+                totalAmount = desc > totalAmount ? 0 : totalAmount - desc;
             }
             var order = new Order
             {
@@ -134,13 +199,12 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 TotalAmount = totalAmount,
                 CreateAt = DateTime.Now,
                 Note = orderRequest.Note,
-                StaffId = orderRequest.StaffId,
+                StaffId = userId,
                 //StaffId = account.AccountId,
                 //PaymentMethodId = orderRequest.PaymentMethodId
             };
             
             await _uow.GetRepository<Order>().InsertAsync(order);
-            
             if (await _uow.CommitAsync() > 0)
             {
                 foreach (var item in orderItems)
@@ -148,9 +212,9 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     item.OrderId = orderId;
                     _uow.GetRepository<Orderitem>().UpdateAsync(item);
                 }
-                if (await _uow.CommitAsync() <= 0)
+                if (await _uow.CommitAsync() == 0)
                 {
-                    return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
+                    return new MethodResult<OrderResponse>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
                 }
                 var status = await _uow.GetRepository<Orderstatusupdate>().GetListAsync();
                 var statusId = status != null && status.Count > 0 ? status.Last().OrderStatusUpdateId + 1 : 1;
@@ -161,60 +225,97 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     OrderId = orderId,
                     UpdatedAt = DateTime.Now,
                     //AccountId = account.AccountId
-                    AccountId = orderRequest.StaffId,
+                    AccountId = userId,
                 };
                 await _uow.GetRepository<Orderstatusupdate>().InsertAsync(orderStatus);
                 if (await _uow.CommitAsync() <= 0)
                 {
-                    return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
+                    return new MethodResult<OrderResponse>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
                 }
                 var setOrder = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == order.OrderId, include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff));
-               
-                var transaction = new Transaction
+                var odResp = _mapper.Map<OrderResponse>(setOrder);
+                if (!string.IsNullOrEmpty(orderRequest.VoucherCode))
+                {
+                    var voucher = await _uow.GetRepository<Voucher>().SingleOrDefaultAsync(predicate: v => v.VoucherCode.ToLower().Equals(orderRequest.VoucherCode.ToLower()));
+                    if (voucher == null)
+                    {
+                        return new MethodResult<OrderResponse>.Failure("Voucher not found!", StatusCodes.Status400BadRequest);
+                    }
+                    if (voucher.ExpirationDate < DateTime.Now)
+                    {
+                        return new MethodResult<OrderResponse>.Failure("Voucher not valid!", StatusCodes.Status400BadRequest);
+                    }
+                    if (voucher.MinimumOrderAmount > totalAmount)
+                    {
+                        return new MethodResult<OrderResponse>.Failure("Not eligible to use voucher!", StatusCodes.Status400BadRequest);
+                    }
+
+                    var voucherUsage = new Voucherusage
+                    {
+                        VoucherId = voucher.VoucherId,
+                        OrderId = orderId,
+                        AmountUsed = totalAmount,
+                        UsedAt = DateTime.Now
+                    };
+                    await _uow.GetRepository<Voucherusage>().InsertAsync(voucherUsage);
+                    if (!(await _uow.CommitAsync() > 0))
+                    {
+                        return new MethodResult<OrderResponse>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
+                    }
+                    odResp.Voucher = voucher;
+                }
+                
+                var transaction = new Domain.Models.Transaction
                 {
                     Amount = totalAmount,
                     TransactionType = TransactionTypeConstant.PAY,
                     OrderId = orderId,
-                    StaffId = orderRequest.StaffId,
+                    StaffId = userId,
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now,
                     Status = false
                 };
-                await _uow.GetRepository<Transaction>().InsertAsync(transaction);
+                await _uow.GetRepository<Domain.Models.Transaction>().InsertAsync(transaction);
                 if (await _uow.CommitAsync() <= 0)
                 {
-                    return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
+                    return new MethodResult<OrderResponse>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
                 }
-                return new MethodResult<Order>.Success(setOrder);
+                
+                
+                return new MethodResult<OrderResponse>.Success(odResp);
             }
 
-            return new MethodResult<Order>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
+            return new MethodResult<OrderResponse>.Failure("Create order not success!", StatusCodes.Status400BadRequest);
         }
-        public async Task<MethodResult<Order>> CancelOrder(int orderId)
+        public async Task<MethodResult<Order>> CancelOrder(int orderId, int constant)
         {
-            var orderStatuses = await _uow.GetRepository<Orderstatusupdate>().GetListAsync(predicate: s => s.OrderId == orderId, include: s => s.Include(os => os.Order));
-            foreach (var orderStatus in orderStatuses)
-            {
+            var orderStatuses = await _uow.GetRepository<Orderstatusupdate>().GetListAsync(predicate: s => s.OrderId == orderId, include: s => s.Include(os => os.Order), orderBy: o => o.OrderByDescending(os => os.UpdatedAt));
+            var orderStatus = orderStatuses.FirstOrDefault();
                 if (orderStatus == null)
                 {
                     return new MethodResult<Order>.Failure("Order not found!", StatusCodes.Status400BadRequest);
                 }
-                if (orderStatus.OrderStatus == "Success")
-                {
-                    return new MethodResult<Order>.Failure("Order success can not be canceled!", StatusCodes.Status400BadRequest);
-                }
-                if (orderStatus.OrderStatus == "Canceled")
-                {
-                    return new MethodResult<Order>.Failure("Order canceled can not be canceled!", StatusCodes.Status400BadRequest);
-                }
+            if (constant < 1 || constant > 4)
+            {
+                return new MethodResult<Order>.Failure("Not found status!", StatusCodes.Status400BadRequest);
             }
+            if (orderStatus.OrderStatus == "Success")
+                {
+                    return new MethodResult<Order>.Failure("Order success can not be update status!", StatusCodes.Status400BadRequest);
+                }
+                if (orderStatus.OrderStatus == "Cancelled")
+                {
+                    return new MethodResult<Order>.Failure("Order canceled can not be update status!", StatusCodes.Status400BadRequest);
+                }
+            
+            
             
             var status = await _uow.GetRepository<Orderstatusupdate>().GetListAsync();
             var statusId = status != null && status.Count > 0 ? status.Last().OrderStatusUpdateId + 1 : 1;
             var newStatus = new Orderstatusupdate
             {
                 OrderStatusUpdateId = statusId,
-                OrderStatus = OrderConstant.CANCELED.ToString(),
+                OrderStatus = constant.ToString(),
                 OrderId = orderId,
                 UpdatedAt = DateTime.Now,
                 //AccountId = account.AccountId
@@ -230,46 +331,44 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             return new MethodResult<Order>.Failure("Order cannot be canceled!", StatusCodes.Status400BadRequest);
             
         }
-        public async Task<MethodResult<Order>> ConfirmOrder(int orderId)
-        {
-            var orderStatuses = await _uow.GetRepository<Orderstatusupdate>().GetListAsync(predicate: s => s.OrderId == orderId, include: s => s.Include(os => os.Order));
-            foreach (var orderStatus in orderStatuses)
-            {
-                if (orderStatus == null)
-                {
-                    return new MethodResult<Order>.Failure("Order not found!", StatusCodes.Status400BadRequest);
-                }
-                if (orderStatus.OrderStatus == "Success")
-                {
-                    return new MethodResult<Order>.Failure("Order success can not be paid!", StatusCodes.Status400BadRequest);
-                }
-                if (orderStatus.OrderStatus == "Canceled")
-                {
-                    return new MethodResult<Order>.Failure("Order canceled can not be paid!", StatusCodes.Status400BadRequest);
-                }
-            }
+        //public async Task<MethodResult<Order>> ConfirmOrder(int orderId)
+        //{
+        //    var orderStatuses = await _uow.GetRepository<Orderstatusupdate>().GetListAsync(predicate: s => s.OrderId == orderId, include: s => s.Include(os => os.Order), orderBy: o => o.OrderByDescending(os => os.UpdatedAt));
+        //    var orderStatus = orderStatuses.FirstOrDefault();
+        //    if (orderStatus == null)
+        //    {
+        //        return new MethodResult<Order>.Failure("Order not found!", StatusCodes.Status400BadRequest);
+        //    }
+        //    if (orderStatus.OrderStatus == "Success")
+        //    {
+        //        return new MethodResult<Order>.Failure("Order success can not be paid!", StatusCodes.Status400BadRequest);
+        //    }
+        //    if (orderStatus.OrderStatus == "Canceled")
+        //    {
+        //        return new MethodResult<Order>.Failure("Order canceled can not be paid!", StatusCodes.Status400BadRequest);
+        //    }
 
-            var status = await _uow.GetRepository<Orderstatusupdate>().GetListAsync();
-            var statusId = status != null && status.Count > 0 ? status.Last().OrderStatusUpdateId + 1 : 1;
-            var newStatus = new Orderstatusupdate
-            {
-                OrderStatusUpdateId = statusId,
-                OrderStatus = OrderConstant.SUCCESS.ToString(),
-                OrderId = orderId,
-                UpdatedAt = DateTime.Now,
-                //AccountId = account.AccountId
-                AccountId = orderStatuses.First().AccountId
-            };
+        //    var status = await _uow.GetRepository<Orderstatusupdate>().GetListAsync();
+        //    var statusId = status != null && status.Count > 0 ? status.Last().OrderStatusUpdateId + 1 : 1;
+        //    var newStatus = new Orderstatusupdate
+        //    {
+        //        OrderStatusUpdateId = statusId,
+        //        OrderStatus = OrderConstant.SUCCESS.ToString(),
+        //        OrderId = orderId,
+        //        UpdatedAt = DateTime.Now,
+        //        //AccountId = account.AccountId
+        //        AccountId = orderStatuses.First().AccountId
+        //    };
 
-            await _uow.GetRepository<Orderstatusupdate>().InsertAsync(newStatus);
-            if (await _uow.CommitAsync() > 0)
-            {
-                var setOrder = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == orderId, include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff));
-                return new MethodResult<Order>.Success(setOrder);
-            }
-            return new MethodResult<Order>.Failure("Order cannot be paid!", StatusCodes.Status400BadRequest);
+        //    await _uow.GetRepository<Orderstatusupdate>().InsertAsync(newStatus);
+        //    if (await _uow.CommitAsync() > 0)
+        //    {
+        //        var setOrder = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == orderId, include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff));
+        //        return new MethodResult<Order>.Success(setOrder);
+        //    }
+        //    return new MethodResult<Order>.Failure("Order cannot be paid!", StatusCodes.Status400BadRequest);
 
-        }
+        //}
 
         //public async Task<Account?> GetCurrentUser()
         //{
