@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Pomelo.EntityFrameworkCore.MySql.Scaffolding.Internal;
 
 namespace MilkTeaPosManagement.Domain.Models;
@@ -18,6 +17,10 @@ public partial class MilTeaPosDbContext : DbContext
     }
 
     public virtual DbSet<Account> Accounts { get; set; }
+
+    public virtual DbSet<Cashbalance> Cashbalances { get; set; }
+
+    public virtual DbSet<Cashflow> Cashflows { get; set; }
 
     public virtual DbSet<Category> Categories { get; set; }
 
@@ -42,18 +45,9 @@ public partial class MilTeaPosDbContext : DbContext
     public virtual DbSet<Voucherusage> Voucherusages { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-=> optionsBuilder.UseMySql(GetConnectionString(), Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.39-mysql"));
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseMySql("server=localhost;port=3306;database=milktea_pos_db;uid=root;pwd=123456", Microsoft.EntityFrameworkCore.ServerVersion.Parse("8.0.41-mysql"));
 
-    private string GetConnectionString()
-    {
-        IConfiguration config = new ConfigurationBuilder()
-             .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile("appsettings.json", true, true)
-                    .Build();
-        var strConn = config["ConnectionStrings:MilkTeaDBConnection"];
-
-        return strConn;
-    }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -81,6 +75,52 @@ public partial class MilTeaPosDbContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("Updated_at");
             entity.Property(e => e.Username).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<Cashbalance>(entity =>
+        {
+            entity.HasKey(e => e.BalanceId).HasName("PRIMARY");
+
+            entity.ToTable("cashbalance");
+
+            entity.Property(e => e.Amount).HasPrecision(10, 2);
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("Updated_at");
+        });
+
+        modelBuilder.Entity<Cashflow>(entity =>
+        {
+            entity.HasKey(e => e.CashFlowId).HasName("PRIMARY");
+
+            entity.ToTable("cashflow");
+
+            entity.HasIndex(e => e.UserId, "UserID");
+
+            entity.Property(e => e.CashBalance)
+                .HasPrecision(10, 2)
+                .HasDefaultValueSql("'0.00'");
+            entity.Property(e => e.CashIn)
+                .HasPrecision(10, 2)
+                .HasDefaultValueSql("'0.00'");
+            entity.Property(e => e.CashOut)
+                .HasPrecision(10, 2)
+                .HasDefaultValueSql("'0.00'");
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("Created_at");
+            entity.Property(e => e.FlowType).HasColumnType("enum('CashIn','CashOut')");
+            entity.Property(e => e.NetCash)
+                .HasPrecision(10, 2)
+                .HasDefaultValueSql("'0.00'");
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnType("datetime")
+                .HasColumnName("Updated_at");
+            entity.Property(e => e.UserId).HasColumnName("UserID");
+
+            entity.HasOne(d => d.User).WithMany(p => p.Cashflows)
+                .HasForeignKey(d => d.UserId)
+                .HasConstraintName("cashflow_ibfk_1");
         });
 
         modelBuilder.Entity<Category>(entity =>
@@ -162,7 +202,7 @@ public partial class MilTeaPosDbContext : DbContext
 
             entity.HasIndex(e => e.OrderId, "OrderId");
 
-            entity.Property(e => e.OrderStatus).HasColumnType("enum('Pending','Shipped','Delivered','Success','Cancelled')");
+            entity.Property(e => e.OrderStatus).HasColumnType("enum('PENDING','PREPARING','SUCCESS','CANCELLED')");
             entity.Property(e => e.UpdatedAt)
                 .HasColumnType("datetime")
                 .HasColumnName("Updated_at");
