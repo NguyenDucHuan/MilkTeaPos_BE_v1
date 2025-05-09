@@ -2,9 +2,9 @@
 {
     public enum OrderConstant
     {
-        PENDING = 0,
-        PREPARING = 1,
-        SUCCESS = 2,
-        CANCELLED = 3
+        PENDING = 1,
+        PREPARING = 2,
+        SUCCESS = 3,
+        CANCELLED = 4
     }
 }

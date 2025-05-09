@@ -121,9 +121,9 @@ namespace MilkTeaPosManagement.Api.Controllers
             );
         }
         [HttpPut("change-status/{orderId}")]
-        public async Task<IActionResult> Delete([FromRoute] int orderId, int statusId)
+        public async Task<IActionResult> Delete([FromRoute] int orderId, ChangeStatusModel model)
         {
-            var result = await _service.CancelOrder(orderId, statusId);
+            var result = await _service.CancelOrder(orderId, model.StatusId);
             return result.Match(
                 (errorMessage, statusCode) => Problem(detail: errorMessage, statusCode: statusCode),
                 Ok

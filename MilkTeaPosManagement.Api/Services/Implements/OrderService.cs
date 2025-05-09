@@ -82,7 +82,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         var stt = OrderConstant.CANCELLED.ToString();
                         var orderStatus = new Orderstatusupdate
                         {
-                            OrderStatus = stt[..1].ToUpper()+stt.Substring(1).ToLower(),
+                            OrderStatus = stt[..1].ToUpper()+stt[1..].ToLower(),
                             OrderId = item.OrderId,
                             UpdatedAt = DateTime.Now,
                             AccountId = item.StaffId,
