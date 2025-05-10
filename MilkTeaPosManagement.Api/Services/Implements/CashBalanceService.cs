@@ -68,6 +68,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 balanceResponse.Amount = Math.Round(balanceResponse.Amount ?? 0, 2);
                 balanceResponse.UpdatedAt = cashBalance.UpdatedAt;
                 balanceResponse.CashInTotal = transactions.Where(t => t.TransactionType == TransactionTypeConstant.CASH_IN || t.PaymentMethodId == paymentMethod.PaymentMethodId).Sum(t => t.Amount);
+                balanceResponse.CashOutTotal = transactions.Where(t => t.TransactionType == TransactionTypeConstant.CASH_OUT).Sum(t => t.Amount);
                 balanceResponse.Transactions = _mapper.Map<List<TransactionResponse>>(transactions);
                 return new MethodResult<BalanceResponse>.Success(balanceResponse);
             }
