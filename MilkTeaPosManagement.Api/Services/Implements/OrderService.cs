@@ -146,6 +146,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
         }
         public async Task<MethodResult<OrderResponse>> CreateOrder(OrderRequest orderRequest, int userId)
         {
+
             var orderItems = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.OrderId == null);
             decimal? totalAmount = 0;
             if (orderItems == null || orderItems?.Count == 0)
