@@ -47,7 +47,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         var CashBalance = new Cashbalance
                         {
                             Amount = 0,
-                            UpdatedAt = DateTime.UtcNow
+                            UpdatedAt = DateTime.Now
                         };
                         await _uow.GetRepository<Cashbalance>().InsertAsync(CashBalance);
                         await _uow.CommitAsync();
