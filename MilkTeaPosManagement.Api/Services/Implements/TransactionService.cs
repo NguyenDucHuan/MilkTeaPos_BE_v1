@@ -72,6 +72,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     {
                         OrderId = transaction.OrderId,
                         UpdatedAt = DateTime.Now,
+                        OrderStatus = OrderConstant.PREPARING.ToString(),
                         //AccountId = account.AccountId
                         AccountId = transaction.StaffId
                     };
