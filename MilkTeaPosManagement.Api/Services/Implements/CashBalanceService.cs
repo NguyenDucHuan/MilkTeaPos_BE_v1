@@ -63,8 +63,8 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     return new MethodResult<BalanceResponse>.Failure("No transactions found for the specified date", StatusCodes.Status404NotFound);
                 }
 
-                balanceResponse.ClosingBalance = transactions.FirstOrDefault()?.BeforeCashBalance;
-                balanceResponse.OpeningBalance = transactions.LastOrDefault()?.AfterCashBalance;
+                balanceResponse.ClosingBalance = transactions.FirstOrDefault()?.AfterCashBalance;
+                balanceResponse.OpeningBalance = transactions.LastOrDefault()?.BeforeCashBalance;
                 balanceResponse.Amount = Math.Round(balanceResponse.Amount ?? 0, 2);
                 balanceResponse.UpdatedAt = cashBalance.UpdatedAt;
                 balanceResponse.CashInTotal = transactions.Where(t => t.TransactionType == TransactionTypeConstant.CASH_IN || t.PaymentMethodId == paymentMethod.PaymentMethodId).Sum(t => t.Amount);
