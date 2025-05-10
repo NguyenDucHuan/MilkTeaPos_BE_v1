@@ -310,9 +310,15 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             }
 
             var newStt = constant == 1 ? "PENDING" : constant == 2 ? "PREPARING" : constant == 3 ? "SUCCESS" : "CANCELLED";
-            var existedStt = await _uow.GetRepository<Orderstatusupdate>().SingleOrDefaultAsync(predicate: s => s.OrderId == orderId && s.OrderStatus == newStt);
+            //var existedStt = await _uow.GetRepository<Orderstatusupdate>().SingleOrDefaultAsync(predicate: s => s.OrderId == orderId && s.OrderStatus == newStt);
+            var isExisted = newStt == orderStatus.OrderStatus;
+            var oldStt = orderStatus.OrderStatus == "PENDING" ? 1 : orderStatus.OrderStatus == "PREPARING" ? 2 : orderStatus.OrderStatus == "SUCCESS" ? 3 : 4;
+            if (constant < oldStt)
+            {
+                return new MethodResult<Order>.Failure("Order status can not be update from '"+orderStatus.OrderStatus+"' to '"+newStt+"'!", StatusCodes.Status400BadRequest);
+            }
 
-            if (existedStt == null)
+            if (!isExisted)
             {
                 var status = await _uow.GetRepository<Orderstatusupdate>().GetListAsync();
                 var statusId = status != null && status.Count > 0 ? status.Last().OrderStatusUpdateId + 1 : 1;
