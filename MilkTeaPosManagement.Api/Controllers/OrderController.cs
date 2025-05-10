@@ -54,7 +54,7 @@ namespace MilkTeaPosManagement.Api.Controllers
             //return Ok(result.Item2);
         }
         [HttpGet("get-by-id/{orderId}")]
-        public async Task<IActionResult> Get([FromRoute]int orderId)
+        public async Task<IActionResult> Get([FromRoute] int orderId)
         {
             var result = await _service.GetOrderDetail(orderId);
             if (result.Item1 == 400)
@@ -143,7 +143,7 @@ namespace MilkTeaPosManagement.Api.Controllers
         //}
         [HttpGet("order-status")]
         public async Task<IActionResult> GetStatus()
-        {            
+        {
             var status = new List<object>
             {
                 new

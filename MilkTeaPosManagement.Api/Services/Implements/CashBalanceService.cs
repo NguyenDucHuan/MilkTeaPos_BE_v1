@@ -33,7 +33,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     var CashBalance = new Cashbalance
                     {
                         Amount = 0,
-                        UpdatedAt = DateTime.UtcNow
+                        UpdatedAt = DateTime.Now
                     };
                     await _unitOfWork.GetRepository<Cashbalance>().InsertAsync(CashBalance);
                     await _unitOfWork.CommitAsync();
@@ -149,7 +149,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     var CashBalance = new Cashbalance
                     {
                         Amount = 0,
-                        UpdatedAt = DateTime.UtcNow
+                        UpdatedAt = DateTime.Now
                     };
                     await _unitOfWork.GetRepository<Cashbalance>().InsertAsync(CashBalance);
                     await _unitOfWork.CommitAsync();
@@ -158,12 +158,12 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 var transaction = new Transaction
                 {
                     Amount = amount,
-                    TransactionDate = DateTime.UtcNow,
+                    TransactionDate = DateTime.Now,
                     StaffId = userId,
                     BeforeCashBalance = cashBalance.Amount,
                     TransactionType = type,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
                     Description = description,
                 };
                 if (amount <= 0)
@@ -197,7 +197,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 transaction.AfterCashBalance = cashBalance.Amount;
                 transaction.Status = true;
                 await _unitOfWork.GetRepository<Transaction>().InsertAsync(transaction);
-                cashBalance.UpdatedAt = DateTime.UtcNow;
+                cashBalance.UpdatedAt = DateTime.Now;
                 _unitOfWork.GetRepository<Cashbalance>().UpdateAsync(cashBalance);
                 await _unitOfWork.CommitAsync();
                 await _unitOfWork.CommitTransactionAsync();
