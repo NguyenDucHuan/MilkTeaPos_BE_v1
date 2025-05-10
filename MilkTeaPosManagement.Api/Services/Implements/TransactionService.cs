@@ -29,18 +29,14 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 {
                     return new MethodResult<TransactionResponse>.Failure("Paymentmethod not valid!", StatusCodes.Status400BadRequest);
                 }
-                var transaction = await _uow.GetRepository<Domain.Models.Transaction>().SingleOrDefaultAsync(predicate: t => t.OrderId == id );
+                var transaction = await _uow.GetRepository<Domain.Models.Transaction>().SingleOrDefaultAsync(predicate: t => t.OrderId == id);
                 if (transaction == null)
                 {
                     return new MethodResult<TransactionResponse>.Failure("Transaction not valid!", StatusCodes.Status400BadRequest);
                 }
-                if (paymrentmethod.MethodName == "Cash" && model.AmountPaid.HasValue && model.AmountPaid.Value <= transaction.Amount)
+                if (paymrentmethod.MethodName == "Cash" && model.AmountPaid.HasValue && model.AmountPaid.Value < transaction.Amount)
                 {
                     return new MethodResult<TransactionResponse>.Failure("Amount paid cannot be less than " + transaction.Amount + "!", StatusCodes.Status400BadRequest);
-                }
-                if (paymrentmethod.MethodName == "Cash" && (!model.AmountPaid.HasValue || model.AmountPaid.Value <= 0))
-                {
-                    return new MethodResult<TransactionResponse>.Failure("Amount paid cannot be less than 0!", StatusCodes.Status400BadRequest);
                 }
                 if (paymrentmethod.MethodName == "Cash" && model.AmountPaid.HasValue && model.AmountPaid.Value > transaction.Amount)
                 {
