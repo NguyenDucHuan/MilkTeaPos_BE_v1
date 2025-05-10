@@ -128,6 +128,15 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                         comboItems.Add(cb);
                     }
                 }
+                var proToppings = new List<int>();
+                if (product.ProductType == "SingleProduct")
+                {
+                    var productToppings = await _uow.GetRepository<Toppingforproduct>().GetListAsync(predicate: tp => tp.ProductId == product.ParentId);
+                    foreach (var productTopping in productToppings)
+                    {
+                        proToppings.Add(productTopping.ToppingId);
+                    }
+                }
                 if (existeds != null)
                 {
                     foreach (var existed in existeds)
@@ -204,7 +213,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     {
                         OrderItemId = itemId,
                         Quantity = request.Quantity,
-                        Price = topping.Prize * request.Quantity,
+                        Price = proToppings.Contains(topping.ProductId) ? 0 : topping.Prize * request.Quantity,
                         MasterId = item.OrderItemId,
                         ProductId = topping.ProductId,
                     };
