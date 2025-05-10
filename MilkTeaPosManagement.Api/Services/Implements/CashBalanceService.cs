@@ -52,7 +52,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 var transactions = await _unitOfWork.GetRepository<Transaction>().GetListAsync(
                     predicate: t => t.TransactionDate.HasValue &&
                     t.TransactionDate.Value.Date >= startDate &&
-                    t.TransactionDate.Value.Date <= endDate+1 &&
+                    t.TransactionDate.Value.Date <= endDate &&
                     (t.TransactionType == TransactionTypeConstant.CASH_IN ||
                     t.TransactionType == TransactionTypeConstant.CASH_OUT ||
                     t.PaymentMethodId == paymentMethod.PaymentMethodId),
