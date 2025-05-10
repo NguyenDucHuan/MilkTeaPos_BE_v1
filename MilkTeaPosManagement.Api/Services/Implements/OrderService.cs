@@ -220,10 +220,11 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 }
                 var status = await _uow.GetRepository<Orderstatusupdate>().GetListAsync();
                 var statusId = status != null && status.Count > 0 ? status.Last().OrderStatusUpdateId + 1 : 1;
+                var Status = OrderConstant.PENDING.ToString();
                 var orderStatus = new Orderstatusupdate
                 {
                     OrderStatusUpdateId = statusId,
-                    OrderStatus = OrderConstant.PENDING.GetType().ToString(),
+                    OrderStatus = Status,
                     OrderId = orderId,
                     UpdatedAt = DateTime.Now,
                     //AccountId = account.AccountId
