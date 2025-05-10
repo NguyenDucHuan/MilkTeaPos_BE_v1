@@ -223,7 +223,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 var orderStatus = new Orderstatusupdate
                 {
                     OrderStatusUpdateId = statusId,
-                    OrderStatus = OrderConstant.PENDING.ToString(),
+                    OrderStatus = OrderConstant.PENDING.GetType().ToString(),
                     OrderId = orderId,
                     UpdatedAt = DateTime.Now,
                     //AccountId = account.AccountId
@@ -316,7 +316,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             var oldStt = orderStatus.OrderStatus == "PENDING" ? 1 : orderStatus.OrderStatus == "PREPARING" ? 2 : orderStatus.OrderStatus == "SUCCESS" ? 3 : 4;
             if (constant < oldStt)
             {
-                return new MethodResult<Order>.Failure("Order status can not be update from '"+orderStatus.OrderStatus+"' to '"+newStt+"'!", StatusCodes.Status400BadRequest);
+                return new MethodResult<Order>.Failure("Order status can not be update from '" + orderStatus.OrderStatus + "' to '" + newStt + "'!", StatusCodes.Status400BadRequest);
             }
 
             if (!isExisted)
