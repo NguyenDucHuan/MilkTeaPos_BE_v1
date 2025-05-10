@@ -25,31 +25,41 @@ namespace MilkTeaPosManagement.Api.Controllers
                 return BadRequest(result.Item3);
             }
             var orderList = new List<object>();
-            if (result.Item2?.Items != null && result.Item2.Items.Count > 0)
+            if (result.Item2 != null && result.Item2.Items != null && result.Item2.Items.Count > 0)
             {
                 foreach (var item in result.Item2.Items)
                 {
+                    var stt = item?.Transactions?.OrderByDescending(t => t.UpdatedAt).Take(1).FirstOrDefault()?.Status;
                     orderList.Add(new
                     {
-                        orderId = item.OrderId,
-                        createAt = item.CreateAt,
-                        totalAmount = item.TotalAmount,
-                        note = item.Note,
-                        staffId = item.StaffId,
-                        staffName = item.Staff?.FullName,
-                        voucherCode = item.Voucherusages?.OrderByDescending(vu => vu.UsedAt).Take(1).FirstOrDefault()?.Voucher?.VoucherCode,
-                        orderStatus = item.Orderstatusupdates?.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus,
-                        paymentStatus = item.Transactions.OrderByDescending(t => t.UpdatedAt).Take(1).FirstOrDefault().Status.Value ? "Paid" : "Unpaid"
+                        orderId = item?.OrderId,
+                        createAt = item?.CreateAt,
+                        totalAmount = item?.TotalAmount,
+                        note = item?.Note,
+                        staffId = item?.StaffId,
+                        staffName = item?.Staff?.FullName,
+                        voucherCode = item?.Voucherusages?.OrderByDescending(vu => vu.UsedAt).Take(1).FirstOrDefault()?.Voucher?.VoucherCode,
+                        orderStatus = item?.Orderstatusupdates?.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus,
+                        //paymentStatus = item.Transactions.OrderByDescending(t => t.UpdatedAt).Take(1).FirstOrDefault().Status.HasValue ? "Paid" : "Unpaid"
+                        paymentStatus = (stt != null && stt.HasValue && stt.Value) ? "Paid" : "Unpaid"
                     });
                 }
+                return Ok(new
+                {
+                    size = result.Item2.Size,
+                    page = result.Item2.Page,
+                    total = result.Item2.Total,
+                    totalPages = result.Item2.TotalPages,
+                    items = orderList
+                });
             }
             return Ok(new
             {
-                size = result.Item2.Size,
-                page = result.Item2.Page,
-                total = result.Item2.Total,
-                totalPages = result.Item2.TotalPages,
-                items = orderList
+                size = 10,
+                page = 1,
+                total = 0,
+                totalPages = 0,
+                items = new List<Order>()
             });
             //return Ok(result.Item2);
         }
@@ -142,8 +152,9 @@ namespace MilkTeaPosManagement.Api.Controllers
         //    );
         //}
         [HttpGet("order-status")]
-        public async Task<IActionResult> GetStatus()
-        {
+
+        public IActionResult GetStatus()
+        {            
             var status = new List<object>
             {
                 new

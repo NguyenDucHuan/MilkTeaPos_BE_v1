@@ -24,7 +24,8 @@ namespace MilkTeaPosManagement.Api.Services.Implements
         {
             if (search == null)
             {
-                return (4, await _uow.GetRepository<Order>().GetPagingListAsync(include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff).Include(od => od.Orderitems).Include(od => od.Voucherusages).ThenInclude(vu => vu.Voucher).Include(od => od.Transactions).ThenInclude(t => t.PaymentMethod), page: 1, size: 10, orderBy: o => o.OrderByDescending(od => od.CreateAt)), null);
+                var result = await _uow.GetRepository<Order>().GetPagingListAsync(include: o => o.Include(od => od.Orderstatusupdates).Include(od => od.Staff).Include(od => od.Orderitems).Include(od => od.Voucherusages).ThenInclude(vu => vu.Voucher).Include(od => od.Transactions).ThenInclude(t => t.PaymentMethod), page: 1, size: 10, orderBy: o => o.OrderByDescending(od => od.CreateAt));
+                return (4, result, null);
             }
             //if (search.Status != null && search.Status != OrderConstant.PENDING && search.Status != OrderConstant.SHIPPED && search.Status != OrderConstant.DELIVERED && search.Status != OrderConstant.CANCELED)
             //{
