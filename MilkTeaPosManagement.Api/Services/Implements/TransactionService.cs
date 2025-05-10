@@ -29,7 +29,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 {
                     return new MethodResult<TransactionResponse>.Failure("Paymentmethod not valid!", StatusCodes.Status400BadRequest);
                 }
-                var transaction = await _uow.GetRepository<Domain.Models.Transaction>().SingleOrDefaultAsync(predicate: t => t.TransactionId == id);
+                var transaction = await _uow.GetRepository<Domain.Models.Transaction>().SingleOrDefaultAsync(predicate: t => t.OrderId == id );
                 if (transaction == null)
                 {
                     return new MethodResult<TransactionResponse>.Failure("Transaction not valid!", StatusCodes.Status400BadRequest);
@@ -69,8 +69,8 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                     transaction.Status = true;
                     transaction.UpdatedAt = DateTime.Now;
                     transaction.BeforeCashBalance = cashBalance.Amount;
-                    transaction.AfterCashBalance = cashBalance.Amount - (model.AmountPaid - transaction.Amount);
-                    cashBalance.Amount = cashBalance.Amount - (model.AmountPaid - transaction.Amount);
+                    cashBalance.Amount = cashBalance.Amount + transaction.Amount;
+                    transaction.AfterCashBalance = cashBalance.Amount;
                     cashBalance.UpdatedAt = DateTime.Now;
                     var newStatus = new Orderstatusupdate
                     {
