@@ -38,7 +38,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 {
                     return new MethodResult<TransactionResponse>.Failure("Amount paid cannot be less than " + transaction.Amount + "!", StatusCodes.Status400BadRequest);
                 }
-                if (paymrentmethod.MethodName == "Cash" && model.AmountPaid.HasValue && model.AmountPaid.Value > transaction.Amount)
+                if (paymrentmethod.MethodName == "Cash")
                 {
                     var cashBalance = await _uow.GetRepository<Cashbalance>().SingleOrDefaultAsync();
 
