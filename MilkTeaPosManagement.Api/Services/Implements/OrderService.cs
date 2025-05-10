@@ -77,7 +77,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 if (item.Transactions.FirstOrDefault() != null && item.Transactions.FirstOrDefault()?.PaymentMethodId == 3)
                 {
                     PaymentLinkInformation paymentLinkInformation = await _payOS.getPaymentLinkInformation(item.OrderId);
-                    if (paymentLinkInformation.status == "CANCELLED" && (item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "Delivered" || item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "Pending"))
+                    if (paymentLinkInformation.status == "CANCELLED" && (item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "PREPARING" || item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "PENDING"))
                     {
                         var stt = OrderConstant.CANCELLED.ToString();
                         var orderStatus = new Orderstatusupdate
@@ -100,7 +100,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                             return (4, null, "Cannot update statuses"); //fail
                         }
                     }
-                    else if (paymentLinkInformation.status == "PAID" && (item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "Delivered" || item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "Pending"))
+                    else if (paymentLinkInformation.status == "PAID" && (item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "PREPARING" || item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "PENDING"))
                     {
                         var stt = OrderConstant.SUCCESS.ToString();
                         var orderStatus = new Orderstatusupdate
@@ -301,19 +301,25 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             {
                 return new MethodResult<Order>.Failure("Not found status!", StatusCodes.Status400BadRequest);
             }
-            if (orderStatus.OrderStatus == "Success")
+            if (orderStatus.OrderStatus == "SUCCESS")
             {
                 return new MethodResult<Order>.Failure("Order success can not be update status!", StatusCodes.Status400BadRequest);
             }
-            if (orderStatus.OrderStatus == "Cancelled")
+            if (orderStatus.OrderStatus == "CANCELLED")
             {
                 return new MethodResult<Order>.Failure("Order canceled can not be update status!", StatusCodes.Status400BadRequest);
             }
 
-            var newStt = constant == 1 ? "Pending" : constant == 2 ? "Preparing" : constant == 3 ? "Success" : "Cancelled";
-            var existedStt = await _uow.GetRepository<Orderstatusupdate>().SingleOrDefaultAsync(predicate: s => s.OrderId == orderId && s.OrderStatus == newStt);
+            var newStt = constant == 1 ? "PENDING" : constant == 2 ? "PREPARING" : constant == 3 ? "SUCCESS" : "CANCELLED";
+            //var existedStt = await _uow.GetRepository<Orderstatusupdate>().SingleOrDefaultAsync(predicate: s => s.OrderId == orderId && s.OrderStatus == newStt);
+            var isExisted = newStt == orderStatus.OrderStatus;
+            var oldStt = orderStatus.OrderStatus == "PENDING" ? 1 : orderStatus.OrderStatus == "PREPARING" ? 2 : orderStatus.OrderStatus == "SUCCESS" ? 3 : 4;
+            if (constant < oldStt)
+            {
+                return new MethodResult<Order>.Failure("Order status can not be update from '"+orderStatus.OrderStatus+"' to '"+newStt+"'!", StatusCodes.Status400BadRequest);
+            }
 
-            if (existedStt != null)
+            if (!isExisted)
             {
                 var status = await _uow.GetRepository<Orderstatusupdate>().GetListAsync();
                 var statusId = status != null && status.Count > 0 ? status.Last().OrderStatusUpdateId + 1 : 1;

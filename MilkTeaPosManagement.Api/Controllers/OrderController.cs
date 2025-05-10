@@ -12,7 +12,7 @@ namespace MilkTeaPosManagement.Api.Controllers
 {
     [Route("api/order")]
     [ApiController]
-    //[Authorize]
+    [Authorize]
     public class OrderController(IOrderService service) : ControllerBase
     {
         private readonly IOrderService _service = service;
@@ -35,8 +35,8 @@ namespace MilkTeaPosManagement.Api.Controllers
                     note = item.Note,
                     staffId = item.StaffId,
                     staffName = item.Staff?.FullName,
-                    voucherCode = item.Voucherusages.OrderByDescending(vu => vu.UsedAt).Take(1).FirstOrDefault()?.Voucher?.VoucherCode,
-                    orderStatus = item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus,
+                    voucherCode = item.Voucherusages?.OrderByDescending(vu => vu.UsedAt).Take(1).FirstOrDefault()?.Voucher?.VoucherCode,
+                    orderStatus = item.Orderstatusupdates?.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus,
                     paymentStatus = item.Transactions.OrderByDescending(t => t.UpdatedAt).Take(1).FirstOrDefault().Status.Value ? "Paid" : "Unpaid"
                 });
             }
