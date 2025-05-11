@@ -15,44 +15,44 @@ namespace MilkTeaPosManagement.Api.Services.Implements
     {
         private readonly IUnitOfWork _uow = uow;
         private readonly IProductService _productService = productService;
-        public async Task<(ICollection<Orderitem>, List<Product>?)> GetCartAsync()
+        public async Task<ICollection<Orderitem>> GetCartAsync()
         {
             var cart = await _uow.GetRepository<Orderitem>().GetListAsync(predicate: oi => oi.OrderId == null && oi.MasterId == null, include: oi => oi.Include(i => i.Product));
             var combos = await _uow.GetRepository<Product>().GetListAsync(predicate: p => p.ProductType == "Combo" && p.ParentId == null, include: p => p.Include(c => c.Comboltems));
-            var offers = GetOffers(cart, combos);
-            return (cart, offers);
+            //var offers = GetOffers(cart, combos);
+            return (cart);
         }
 
-        public List<Product>? GetOffers(ICollection<Orderitem> cart, ICollection<Product> combos)
-        {
-            var offers = new List<Product>();
-            var cartProductIds = new List<int?>();
-            if (cart != null && combos !=null && cart.Count > 0 && combos.Count > 0)
-            {
-                foreach (var product in cart)
-                {
-                    cartProductIds.Add(product.ProductId);
-                }
-                foreach (var combo in combos)
-                {
-                    bool suitable = true;
-                    foreach (var comboItem in combo.Comboltems)
-                    {
-                        if (!cartProductIds.Contains(comboItem.ProductId))
-                        {
-                            suitable = false;
-                            break;
-                        }
-                    }
-                    if (suitable)
-                    {
-                        offers.Add(combo);
-                    }
-                }
-                return offers;
-            }
-            return null;
-        }
+        //public List<Product>? GetOffers(ICollection<Orderitem> cart, ICollection<Product> combos)
+        //{
+        //    var offers = new List<Product>();
+        //    var cartProductIds = new List<int?>();
+        //    if (cart != null && combos !=null && cart.Count > 0 && combos.Count > 0)
+        //    {
+        //        foreach (var product in cart)
+        //        {
+        //            cartProductIds.Add(product.ProductId);
+        //        }
+        //        foreach (var combo in combos)
+        //        {
+        //            bool suitable = true;
+        //            foreach (var comboItem in combo.Comboltems)
+        //            {
+        //                if (!cartProductIds.Contains(comboItem.ProductId))
+        //                {
+        //                    suitable = false;
+        //                    break;
+        //                }
+        //            }
+        //            if (suitable)
+        //            {
+        //                offers.Add(combo);
+        //            }
+        //        }
+        //        return offers;
+        //    }
+        //    return null;
+        //}
         public async Task<MethodResult<Orderitem>> ChangeProductsToCombo(int comboId)
         {
             var combo = await _uow.GetRepository<Product>().SingleOrDefaultAsync(predicate: p => p.ProductId == comboId, include: p => p.Include(c => c.Comboltems));
