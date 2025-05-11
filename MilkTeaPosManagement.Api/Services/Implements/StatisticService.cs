@@ -27,7 +27,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 //var orders = await _uow.GetRepository<Order>().GetListAsync(predicate: o => o.CreateAt.Value.Year == dateData.Value.Year && o.CreateAt.Value.Month == dateData.Value.Month && o.CreateAt.Value.Day == dateData.Value.Day 
                 //                                                                            && (o.CreateAt.Value.Hour == starttime.Hour || o.CreateAt.Value.Hour == starttime.AddHours(1).Hour));
                 var orders = new List<Order>();
-                var statuses = await _uow.GetRepository<Orderstatusupdate>().GetListAsync(predicate: stt => stt.OrderStatus == "Success" && stt.UpdatedAt.Value.Year == dateData.Value.Year && stt.UpdatedAt.Value.Month == dateData.Value.Month && stt.UpdatedAt.Value.Day == dateData.Value.Day
+                var statuses = await _uow.GetRepository<Orderstatusupdate>().GetListAsync(predicate: stt => stt.OrderStatus == "SUCCESS" && stt.UpdatedAt.Value.Year == dateData.Value.Year && stt.UpdatedAt.Value.Month == dateData.Value.Month && stt.UpdatedAt.Value.Day == dateData.Value.Day
                                                                                             && (stt.UpdatedAt.Value.Hour == starttime.Hour || stt.UpdatedAt.Value.Hour == starttime.AddHours(1).Hour));
                 foreach(var status in statuses)
                 {
@@ -84,7 +84,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 //var orders = await _uow.GetRepository<Order>().GetListAsync(predicate: o => o.CreateAt.Value.Year == fromDate.Value.Year && o.CreateAt.Value.Month == fromDate.Value.Month && o.CreateAt.Value.Day == fromDate.Value.Day
                 //                                                                            && o.CreateAt.Value.Day == fromDate.Value.Day);
                 var orders = new List<Order>();
-                var statuses = await _uow.GetRepository<Orderstatusupdate>().GetListAsync(predicate: stt => stt.OrderStatus == "Success" && stt.UpdatedAt.Value.Year == fromDate.Value.Year && stt.UpdatedAt.Value.Month == fromDate.Value.Month && stt.UpdatedAt.Value.Day == fromDate.Value.Day);
+                var statuses = await _uow.GetRepository<Orderstatusupdate>().GetListAsync(predicate: stt => stt.OrderStatus == "SUCCESS" && stt.UpdatedAt.Value.Year == fromDate.Value.Year && stt.UpdatedAt.Value.Month == fromDate.Value.Month && stt.UpdatedAt.Value.Day == fromDate.Value.Day);
                 foreach (var status in statuses)
                 {
                     var od = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == status.OrderId);
@@ -131,7 +131,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 //var orders = await _uow.GetRepository<Order>().GetListAsync(predicate: o => o.CreateAt.Value.Year == startDate.Year && o.CreateAt.Value.Month == startDate.Month
                 //                                                                            && o.CreateAt.Value.Day == startDate.Day);
                 var orders = new List<Order>();
-                var statuses = await _uow.GetRepository<Orderstatusupdate>().GetListAsync(predicate: stt => stt.OrderStatus == "Success" && stt.UpdatedAt.Value.Year == startDate.Year && stt.UpdatedAt.Value.Month == startDate.Month && stt.UpdatedAt.Value.Day == startDate.Day);
+                var statuses = await _uow.GetRepository<Orderstatusupdate>().GetListAsync(predicate: stt => stt.OrderStatus == "SUCCESS" && stt.UpdatedAt.Value.Year == startDate.Year && stt.UpdatedAt.Value.Month == startDate.Month && stt.UpdatedAt.Value.Day == startDate.Day);
                 foreach (var status in statuses)
                 {
                     var od = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == status.OrderId);
@@ -176,7 +176,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                 //var orders = await _uow.GetRepository<Order>().GetListAsync(predicate: o => o.CreateAt.Value.Year == startDate.Year
                 //                                                                            && o.CreateAt.Value.Month == startDate.Month);
                 var orders = new List<Order>();
-                var statuses = await _uow.GetRepository<Orderstatusupdate>().GetListAsync(predicate: stt => stt.OrderStatus == "Success" && stt.UpdatedAt.Value.Year == startDate.Year && stt.UpdatedAt.Value.Month == startDate.Month);
+                var statuses = await _uow.GetRepository<Orderstatusupdate>().GetListAsync(predicate: stt => stt.OrderStatus == "SUCCESS" && stt.UpdatedAt.Value.Year == startDate.Year && stt.UpdatedAt.Value.Month == startDate.Month);
                 foreach (var status in statuses)
                 {
                     var od = await _uow.GetRepository<Order>().SingleOrDefaultAsync(predicate: o => o.OrderId == status.OrderId);
@@ -228,7 +228,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
             var productSum = new List<SellProductModel>();
             var products = await _uow.GetRepository<Product>().GetListAsync(predicate: o => o.Status == true);
 
-            var statuses = await _uow.GetRepository<Orderstatusupdate>().GetListAsync(predicate: stt => stt.OrderStatus == "Success");
+            var statuses = await _uow.GetRepository<Orderstatusupdate>().GetListAsync(predicate: stt => stt.OrderStatus == "SUCCESS");
             var orderItems = new List<Orderitem>();
             foreach (var status in statuses)
             {

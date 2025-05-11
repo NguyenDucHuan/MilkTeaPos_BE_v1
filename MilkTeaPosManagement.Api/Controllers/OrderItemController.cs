@@ -21,7 +21,7 @@ namespace MilkTeaPosManagement.Api.Controllers
             {
                 var result = await _service.GetCartAsync();
                 var cartResponse = new List<object>();
-                foreach (var item in result.Item1)
+                foreach (var item in result)
                 {
                     var toppings = await _service.GetToppingsInCart(item.OrderItemId);
                     var toppingOfProduct = new List<object>();
@@ -53,6 +53,7 @@ namespace MilkTeaPosManagement.Api.Controllers
                         orderItemId = item.OrderItemId,
                         productId = item.ProductId,
                         productName = item.Product?.ProductName,
+                        allowToppings = item.Product?.ToppingAllowed,
                         sizeId = item.Product?.SizeId,
                         prize = item.Product?.Prize,
                         quantity = item.Quantity,
@@ -64,8 +65,7 @@ namespace MilkTeaPosManagement.Api.Controllers
                 }
                 return Ok(new
                 {
-                    cart = cartResponse,
-                    offers = result.Item2
+                    cart = cartResponse
                 });
             } catch (Exception ex)
             {

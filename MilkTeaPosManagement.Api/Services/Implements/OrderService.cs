@@ -56,29 +56,31 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                                                                                                                                                                                                                                             : search.SortBy.ToLower().Equals("staffid") ? o.OrderByDescending(od => od.StaffId)
                                                                                                                                                                                                                                                                                                 : o.OrderByDescending(od => od.Orderstatusupdates.FirstOrDefault().OrderStatus)))
                                                                         );
-            var clientId = _configuration["payOS:ClientId"];
-            if (clientId == null)
+            
+            if (list != null && list.Items != null && list.Items.Count > 0)
             {
-                return (1, null, "ClientId not found"); //ClientId not found
-            }
-            var apiKey = _configuration["payOS:ApiKey"];
-            if (apiKey == null)
-            {
-                return (2, null, "APIKEY not found"); //ApiKey not found
-            }
-            var checksumKey = _configuration["payOS:ChecksumKey"];
-            if (checksumKey == null)
-            {
-                return (3, null, "ChecksumKey not found"); //ChecksumKey not found
-            }
+                var clientId = _configuration["payOS:ClientId"];
+                if (clientId == null)
+                {
+                    return (1, null, "ClientId not found"); //ClientId not found
+                }
+                var apiKey = _configuration["payOS:ApiKey"];
+                if (apiKey == null)
+                {
+                    return (2, null, "APIKEY not found"); //ApiKey not found
+                }
+                var checksumKey = _configuration["payOS:ChecksumKey"];
+                if (checksumKey == null)
+                {
+                    return (3, null, "ChecksumKey not found"); //ChecksumKey not found
+                }
 
-            PayOS _payOS = new(clientId, apiKey, checksumKey);
-            foreach (var item in list.Items)
-            {
-                if (item.Transactions.FirstOrDefault() != null && item.Transactions.FirstOrDefault()?.PaymentMethodId == 3)
+                PayOS _payOS = new(clientId, apiKey, checksumKey);
+                var item = list.Items.LastOrDefault();
+                if (item?.Transactions.FirstOrDefault() != null && item.Transactions.FirstOrDefault()?.PaymentMethodId == 3)
                 {
                     PaymentLinkInformation paymentLinkInformation = await _payOS.getPaymentLinkInformation(item.OrderId);
-                    if (paymentLinkInformation.status == "CANCELLED" && (item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "PREPARING" || item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "PENDING"))
+                    if (paymentLinkInformation != null && paymentLinkInformation.status == "CANCELLED" && (item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "PREPARING" || item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "PENDING"))
                     {
                         var stt = OrderConstant.CANCELLED.ToString();
                         var orderStatus = new Orderstatusupdate
@@ -101,7 +103,7 @@ namespace MilkTeaPosManagement.Api.Services.Implements
                             return (4, null, "Cannot update statuses"); //fail
                         }
                     }
-                    else if (paymentLinkInformation.status == "PAID" && (item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "PREPARING" || item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "PENDING"))
+                    else if (paymentLinkInformation != null && paymentLinkInformation.status == "PAID" && (item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "PREPARING" || item.Orderstatusupdates.OrderByDescending(o => o.UpdatedAt).Take(1).FirstOrDefault()?.OrderStatus == "PENDING"))
                     {
                         var stt = OrderConstant.SUCCESS.ToString();
                         var orderStatus = new Orderstatusupdate
